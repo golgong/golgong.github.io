@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+wordpress-migration-journal.json
+wordpress-migration-verification.json
+wp_token.json
+*wordpress*token*.json
+.env
+*.pem
+*.key
+.*.tmp

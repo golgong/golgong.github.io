@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>골때리는공작소</title>
+  <link>https://golgong.github.io/</link>
+  <description>공공데이터와 공개 API에서 자료를 모아 직접 세어 본 결과</description>
+  <language>ko-KR</language>
+  <atom:link href="https://golgong.github.io/feed.xml" rel="self" type="application/rss+xml" />
+  <item>
+  <title>민준이는 어디 갔을까</title>
+  <link>https://golgong.github.io/2026/08/20/baby-names-seoul/</link>
+  <guid isPermaLink="true">https://golgong.github.io/2026/08/20/baby-names-seoul/</guid>
+  <pubDate>Thu, 20 Aug 2026 02:02:35 +0900</pubDate>
+  <description>요즘 아기 이름이 예전하고 많이 다르다고들 합니다. 얼마나 다른지 세어 봤습니다. 서울특별시 출생신고 기준입니다. 대법원이 20위까지만 알려주기 때문에 그 안에서 셌습니다. 남자아이 이름은 열 개 중 8개가 바뀌었습니다. 2012년 10위 안에 있었지만 2025년에는 10위 밖으로 나간 이름은 민준…</description>
+</item><item>
+  <title>한국인이 제일 많이 먹는 약</title>
+  <link>https://golgong.github.io/2026/08/20/most-used-medicines-korea/</link>
+  <guid isPermaLink="true">https://golgong.github.io/2026/08/20/most-used-medicines-korea/</guid>
+  <pubDate>Thu, 20 Aug 2026 00:20:20 +0900</pubDate>
+  <description>2024년 건강보험으로 청구된 의약품 사용량은 75,064,817,000개입니다. 청구 금액은 30조 3,705억원입니다. 이 가운데 사용량이 가장 많은 약효분류를 세어 봤습니다. 심평원 분류 그대로입니다. 「함소흡입제」는 입안이나 목에 쓰는 약, 「진해거담제」는 기침·가래약, 「동맥경화용제」는 고…</description>
+</item><item>
+  <title>119는 불 끄러 가지 않는다</title>
+  <link>https://golgong.github.io/2026/08/19/what-119-actually-does/</link>
+  <guid isPermaLink="true">https://golgong.github.io/2026/08/19/what-119-actually-does/</guid>
+  <pubDate>Wed, 19 Aug 2026 20:48:01 +0900</pubDate>
+  <description>소방차가 사이렌을 켜고 지나갑니다. 어디에 불이 났나 싶습니다. 이 자료에 기록된 구조 출동 가운데 화재가 아닌 경우가 훨씬 많았습니다. 소방청의 구조활동현황 자료입니다. 화재로 인한 구조 출동뿐 아니라 전체 구조 출동을 담고 있습니다. 벌집 제거가 291,422건으로, 화재 관련 구조 출동 99,…</description>
+</item><item>
+  <title>같은 30분 도수치료, 1만원과 30만원</title>
+  <link>https://golgong.github.io/2026/08/19/manual-therapy-price-gap/</link>
+  <guid isPermaLink="true">https://golgong.github.io/2026/08/19/manual-therapy-price-gap/</guid>
+  <pubDate>Wed, 19 Aug 2026 19:54:54 +0900</pubDate>
+  <description>허리가 아파 도수치료를 받는다면 얼마를 내야 할까요. 건강보험이 적용되지 않는 진료라 병원이 비용을 정합니다. 대신 심평원에 금액을 신고하고 공개해야 합니다. 그 공개 자료를 전부 받아 봤습니다. 심평원이 정한 항목 이름은 「이학요법료/도수치료」 하나입니다. 그런데 병원이 그 아래에 붙인 이름이 4…</description>
+</item><item>
+  <title>임플란트 클릭 한 번에 71,150원</title>
+  <link>https://golgong.github.io/2026/08/19/cosmetic-medical-keyword-ad-cost/</link>
+  <guid isPermaLink="true">https://golgong.github.io/2026/08/19/cosmetic-medical-keyword-ad-cost/</guid>
+  <pubDate>Wed, 19 Aug 2026 18:31:49 +0900</pubDate>
+  <description>임플란트 검색광고의 1위 예상 입찰가는 얼마일까요. 앞 글에서 「암요양병원」의 1위 예상 입찰가는 80,130원이었습니다. 이번에는 건강보험이 적용되지 않아 병원이 가격을 정하는 진료를 살펴봤습니다. 네이버 검색광고에서 받은 순위별 예상 입찰가입니다. 월 검색량이 더 많은 기기(대부분 모바일)를 기…</description>
+</item><item>
+  <title>치과 19,396곳, 리뷰 많은 곳</title>
+  <link>https://golgong.github.io/2026/08/19/dental-clinic-review-count/</link>
+  <guid isPermaLink="true">https://golgong.github.io/2026/08/19/dental-clinic-review-count/</guid>
+  <pubDate>Wed, 19 Aug 2026 12:55:12 +0900</pubDate>
+  <description>치과를 고를 때 무엇을 보고 정하십니까. 네이버 검색 API에서 찾은 블로그·카페 글과 모두닥 리뷰를 치과별로 세어 봤습니다. 어느 치과의 이름이 가장 많이 나왔는지 살펴봤습니다. 네이버 검색 API로 병원 이름을 하나씩 검색해서, 제목에 병원 이름이 있고 본문에 그 병원 지역이 있는 글만 셌습니다…</description>
+</item><item>
+  <title>피부과 1,556곳, 리뷰 많은 곳</title>
+  <link>https://golgong.github.io/2026/08/18/dermatology-review-count/</link>
+  <guid isPermaLink="true">https://golgong.github.io/2026/08/18/dermatology-review-count/</guid>
+  <pubDate>Tue, 18 Aug 2026 11:46:31 +0900</pubDate>
+  <description>피부과를 고를 때 무엇을 보고 정하십니까. 네이버 검색 API에서 찾은 블로그·카페 글과 모두닥 리뷰를 피부과별로 세어 봤습니다. 어느 피부과의 이름이 가장 많이 나왔는지 살펴봤습니다. 네이버 검색 API로 병원 이름을 하나씩 검색해서, 제목에 병원 이름이 있고 본문에 그 병원 지역이 있는 글만 셌…</description>
+</item><item>
+  <title>정형외과 2,841곳, 리뷰 많은 곳</title>
+  <link>https://golgong.github.io/2026/08/18/orthopedics-review-count/</link>
+  <guid isPermaLink="true">https://golgong.github.io/2026/08/18/orthopedics-review-count/</guid>
+  <pubDate>Tue, 18 Aug 2026 11:46:24 +0900</pubDate>
+  <description>어깨가 아파 정형외과를 찾을 때 어떤 기준으로 고르십니까. 네이버 검색 API에서 찾은 블로그·카페 글과 모두닥 리뷰를 정형외과별로 세어 봤습니다. 어느 정형외과의 이름이 가장 많이 나왔는지 살펴봤습니다. 네이버 검색 API로 병원 이름을 하나씩 검색해서, 제목에 병원 이름이 있고 본문에 그 병원…</description>
+</item><item>
+  <title>병원 검색어 광고비, 클릭 한 번에 980원에서 9만원</title>
+  <link>https://golgong.github.io/2026/08/18/hospital-keyword-ad-cost/</link>
+  <guid isPermaLink="true">https://golgong.github.io/2026/08/18/hospital-keyword-ad-cost/</guid>
+  <pubDate>Tue, 18 Aug 2026 08:00:57 +0900</pubDate>
+  <description>병원 검색광고의 1위 예상 입찰가는 클릭 한 번에 얼마일까요. 사람들이 병원 찾을 때 쓰는 검색어 50개를 골라 광고 입찰가를 뽑아 봤습니다. 일반 검색 결과에 어떤 글이 나오는지도 확인하려고 상위 글 4,967건을 하나씩 열어 읽었습니다. 네이버 검색광고에서 받은 순위별 예상 입찰가입니다. 월 검…</description>
+</item><item>
+  <title>내과 5,786곳, 리뷰 많은 곳</title>
+  <link>https://golgong.github.io/2026/08/17/internal-medicine-review-count/</link>
+  <guid isPermaLink="true">https://golgong.github.io/2026/08/17/internal-medicine-review-count/</guid>
+  <pubDate>Mon, 17 Aug 2026 17:09:48 +0900</pubDate>
+  <description>병원을 고를 때 검색하거나 블로그 후기를 읽어 보십니까. 네이버 검색 API에서 찾은 블로그·카페 글과 모두닥 리뷰를 내과별로 세어 봤습니다. 어느 내과의 이름이 가장 많이 나왔는지 살펴봤습니다. 네이버 검색 API로 병원 이름을 하나씩 검색해서, 제목에 병원 이름이 있고 본문에 그 병원 지역이 있…</description>
+</item><item>
+  <title>동네별 병원 진료과목 분포</title>
+  <link>https://golgong.github.io/2026/08/16/clinic-location-by-specialty/</link>
+  <guid isPermaLink="true">https://golgong.github.io/2026/08/16/clinic-location-by-specialty/</guid>
+  <pubDate>Sun, 16 Aug 2026 02:53:26 +0900</pubDate>
+  <description>개원 지역을 정할 때 무엇을 보십니까. 거주 인구만 보면 될까요? 전국 194개 시군구의 인구 구성과 진료과목별 의원 수를 비교했습니다. 연령 구성과의 관계는 진료과목마다 달랐습니다. 20~39세 비중이 높은 지역에는 이비인후과·치과·피부과·정신건강의학과가 상대적으로 많았습니다. 네 진료과목 가운데…</description>
+</item><item>
+  <title>개원 수는 그대로인데 진료과목이 달라졌습니다</title>
+  <link>https://golgong.github.io/2026/08/16/clinic-open-by-specialty/</link>
+  <guid isPermaLink="true">https://golgong.github.io/2026/08/16/clinic-open-by-specialty/</guid>
+  <pubDate>Sun, 16 Aug 2026 02:49:10 +0900</pubDate>
+  <description>현재 남아 있는 의원의 개설일자를 진료과목별로 세어 봤습니다. 자료는 심평원이 공개하는 요양기관 현황입니다. 전국 79,784곳 이고, 이 중 의원·한의원·치과의원이 72,089곳 입니다. 기관마다 개설일자가 붙어 있어서 언제 문을 열었는지 알 수 있습니다. 현재 남아 있는 기관 가운데 개설일자가…</description>
+</item><item>
+  <title>같은 클릭률인데 광고비가 35배 차이납니다</title>
+  <link>https://golgong.github.io/2026/08/16/ad-depth-ctr/</link>
+  <guid isPermaLink="true">https://golgong.github.io/2026/08/16/ad-depth-ctr/</guid>
+  <pubDate>Sun, 16 Aug 2026 01:57:13 +0900</pubDate>
+  <description>온라인 셀러 사이에는 「경쟁이 덜한 키워드를 찾아라」라는 오래된 조언이 있습니다. 광고가 적게 붙은 키워드를 찾으라는 뜻입니다. 맞는 말인지 세어 봤습니다. 네이버 검색광고 데이터에서 키워드 183,904개를 받아 광고 수, 월평균 클릭 수, 클릭률, 1위 예상 입찰가를 대조했습니다.</description>
+</item><item>
+  <title>1인 가구가 가장 많은 동네는 어디인가 — 전국 196개 시군구 집계</title>
+  <link>https://golgong.github.io/2026/08/15/one-person-households-top-districts/</link>
+  <guid isPermaLink="true">https://golgong.github.io/2026/08/15/one-person-households-top-districts/</guid>
+  <pubDate>Sat, 15 Aug 2026 17:01:53 +0900</pubDate>
+  <description>전국에서 1인 세대 비중이 가장 높은 곳은 서울 관악구입니다. 전체 세대의 63.9%가 1인 세대입니다. 전국 평균은 42.6%입니다. 관악구는 그보다 21.3%포인트 높습니다. 눈에 띄는 것은 2위와 3위입니다. 전라남도 영암군(55.2%)과 전라남도 고흥군(55.0%) 입니다. 서울 대학가가 아…</description>
+</item>
+</channel>
+</rss>
