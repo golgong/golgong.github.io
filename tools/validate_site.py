@@ -262,6 +262,19 @@ def main() -> None:
         if text_counter(BeautifulSoup(body, "html.parser")) != text_counter(expected_body):
             fail(f"feed does not contain the full article body: {url}")
 
+    site_css = (ROOT / "assets" / "css" / "site.css").read_text(encoding="utf-8")
+    numeric_weights = [int(weight) for weight in re.findall(r"font-weight:\s*(\d+)", site_css)]
+    if numeric_weights and max(numeric_weights) > 500:
+        fail("site typography exceeds the approved maximum font weight")
+    if "font-synthesis: none" not in site_css:
+        fail("synthetic bold protection is missing")
+    expected_css_href = f"/assets/css/site.css?v={hashlib.sha256(site_css.encode('utf-8')).hexdigest()[:12]}"
+    for path in html_files:
+        soup = BeautifulSoup(path.read_text(encoding="utf-8"), "html.parser")
+        stylesheet = soup.find("link", rel="stylesheet")
+        if stylesheet is None or stylesheet.get("href") != expected_css_href:
+            fail(f"stylesheet cache key mismatch: {path}")
+
     manifest = json.loads((ROOT / "migration-manifest.json").read_text(encoding="utf-8"))
     if manifest["post_count"] != 14 or set(manifest["paths"]) != expected_paths:
         fail("migration manifest mismatch")

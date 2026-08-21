@@ -126,7 +126,7 @@ def page_head(*, title: str, description: str, canonical: str, og_type: str,
 <meta name="robots" content="{esc(robots)}">
 <link rel="canonical" href="{esc(canonical)}">
 <link rel="alternate" type="application/rss+xml" title="{SITE_NAME}" href="{SITE_URL}/feed.xml">
-<link rel="stylesheet" href="/assets/css/site.css">
+<link rel="stylesheet" href="/assets/css/site.css?v={CSS_VERSION}">
 <meta property="og:locale" content="ko_KR">
 <meta property="og:site_name" content="{SITE_NAME}">
 <meta property="og:type" content="{esc(og_type)}">
@@ -411,10 +411,13 @@ body {
   color: var(--ink);
   font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
   font-size: 16px;
+  font-synthesis: none;
   line-height: 1.75;
   letter-spacing: -.012em;
   word-break: keep-all;
 }
+strong,
+b { font-weight: inherit; }
 #main-content { scroll-margin-top: 88px; }
 a {
   color: var(--accent-dark);
@@ -461,7 +464,7 @@ time, table { font-variant-numeric: tabular-nums; }
   gap: 11px;
   color: var(--ink);
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 500;
   letter-spacing: -.035em;
   text-decoration: none;
 }
@@ -479,7 +482,7 @@ time, table { font-variant-numeric: tabular-nums; }
   padding: 22px 0;
   color: var(--muted);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 500;
   text-decoration: none;
 }
 .site-header nav a:hover,
@@ -510,7 +513,7 @@ time, table { font-variant-numeric: tabular-nums; }
   margin: 0 0 13px;
   color: var(--accent-dark);
   font-size: 12px;
-  font-weight: 850;
+  font-weight: 500;
   letter-spacing: .12em;
   line-height: 1.4;
   text-transform: uppercase;
@@ -519,7 +522,7 @@ time, table { font-variant-numeric: tabular-nums; }
 .article-header h1 {
   margin: 0;
   color: var(--ink);
-  font-weight: 820;
+  font-weight: 500;
   letter-spacing: -.055em;
   line-height: 1.15;
 }
@@ -561,7 +564,7 @@ time, table { font-variant-numeric: tabular-nums; }
 .featured-story h2 {
   margin: 0 0 20px;
   font-size: clamp(30px, 3.5vw, 46px);
-  font-weight: 820;
+  font-weight: 500;
   letter-spacing: -.05em;
   line-height: 1.2;
 }
@@ -591,7 +594,7 @@ time, table { font-variant-numeric: tabular-nums; }
 .archive-row time,
 .article-meta { color: var(--muted); font-size: 13px; }
 .story-meta a,
-.text-link { font-size: 14px; font-weight: 800; text-decoration: none; }
+.text-link { font-size: 14px; font-weight: 500; text-decoration: none; }
 .recent-section,
 .archive-section { margin-top: 104px; }
 .section-heading {
@@ -605,6 +608,7 @@ time, table { font-variant-numeric: tabular-nums; }
 .section-heading h2 {
   margin: 0;
   font-size: clamp(26px, 3vw, 36px);
+  font-weight: 500;
   letter-spacing: -.045em;
   line-height: 1.25;
 }
@@ -623,7 +627,7 @@ time, table { font-variant-numeric: tabular-nums; }
 .story-card h3 {
   margin: 7px 0 11px;
   font-size: 21px;
-  font-weight: 780;
+  font-weight: 500;
   letter-spacing: -.035em;
   line-height: 1.42;
 }
@@ -649,7 +653,7 @@ time, table { font-variant-numeric: tabular-nums; }
 .archive-row h3 {
   margin: 0;
   font-size: clamp(17px, 2vw, 21px);
-  font-weight: 720;
+  font-weight: 500;
   letter-spacing: -.025em;
   line-height: 1.45;
 }
@@ -669,6 +673,7 @@ time, table { font-variant-numeric: tabular-nums; }
   grid-column: 1;
   margin: 0;
   font-size: clamp(27px, 3.4vw, 40px);
+  font-weight: 500;
   letter-spacing: -.045em;
   line-height: 1.2;
 }
@@ -729,16 +734,17 @@ time, table { font-variant-numeric: tabular-nums; }
   padding-top: .2em;
   color: var(--ink);
   font-size: clamp(25px, 3.4vw, 32px);
-  font-weight: 800;
+  font-weight: 500;
   letter-spacing: -.04em;
   line-height: 1.38;
 }
 .article-body h3 {
   margin: 2em 0 .65em;
   font-size: 21px;
+  font-weight: 500;
   letter-spacing: -.03em;
 }
-.article-body strong { color: var(--ink); font-weight: 800; }
+.article-body strong { color: var(--ink); font-weight: inherit; }
 .article-body a { overflow-wrap: anywhere; }
 .article-body ul,
 .article-body ol { padding-left: 1.35em; }
@@ -765,7 +771,7 @@ time, table { font-variant-numeric: tabular-nums; }
 }
 .article-contact > p { margin: 0 !important; color: inherit !important; }
 .article-contact strong { color: inherit; }
-.article-contact a { color: #ffb38e; font-weight: 800; }
+.article-contact a { color: #ffb38e; font-weight: 500; }
 .wp-block-table {
   display: block;
   width: min(960px, calc(100vw - 48px));
@@ -800,7 +806,7 @@ time, table { font-variant-numeric: tabular-nums; }
 .wp-block-table th {
   background: var(--dark) !important;
   color: #fff !important;
-  font-weight: 750;
+  font-weight: 500;
 }
 .wp-block-table.is-style-stripes tbody tr:nth-child(odd) { background: #f2eee6; }
 .wp-block-table.is-style-stripes tbody tr:nth-child(even) { background: var(--surface); }
@@ -857,6 +863,7 @@ figcaption {
 .post-nav strong {
   display: block;
   font-size: 15px;
+  font-weight: inherit;
   line-height: 1.5;
 }
 .about-shell .article-header { margin-bottom: 56px; }
@@ -874,9 +881,9 @@ figcaption {
   justify-content: space-between;
   gap: 32px;
 }
-.site-footer strong { color: var(--ink); font-size: 15px; }
+.site-footer strong { color: var(--ink); font-size: 15px; font-weight: inherit; }
 .site-footer p { margin: 4px 0 0; font-size: 13px; }
-.site-footer a { font-size: 13px; font-weight: 750; }
+.site-footer a { font-size: 13px; font-weight: 500; }
 @media (max-width: 900px) {
   .home-intro { grid-template-columns: 1fr; gap: 24px; }
   .home-intro > p { max-width: 620px; }
@@ -964,6 +971,7 @@ figcaption {
   html { scroll-behavior: auto; }
 }
 """
+CSS_VERSION = hashlib.sha256((CSS.strip() + "\n").encode("utf-8")).hexdigest()[:12]
 
 
 def validate(data: dict) -> None:
