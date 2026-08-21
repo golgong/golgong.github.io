@@ -16,6 +16,8 @@ DATA_FILE = ROOT / "data" / "blog.json"
 SITE_URL = "https://golgong.github.io"
 SITE_NAME = "골때리는공작소"
 CONTACT = "golgong@kakao.com"
+SERVICE_HEADLINE = "필요한 자료를 대신 분석해 드립니다."
+OLD_ARTICLE_SERVICE_HEADLINE = "골때리는공작소는 이런 일을 대신해 드립니다."
 EMAIL_PATTERN = re.compile(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", re.IGNORECASE)
 
 
@@ -55,6 +57,7 @@ def enhance_tables(body_html: str) -> str:
 
 
 def enhance_article(body_html: str) -> str:
+    body_html = body_html.replace(OLD_ARTICLE_SERVICE_HEADLINE, SERVICE_HEADLINE)
     pattern = re.compile(
         r'<aside class="article-note">\s*(<p\b.*?</p>)\s*(<p\b.*?</p>)\s*</aside>',
         re.DOTALL,
@@ -229,7 +232,7 @@ def render_article(post: dict, posts: list[dict]) -> str:
 
 
 def render_index(posts: list[dict]) -> str:
-    description = "공공데이터와 공개 API에서 자료를 모아 직접 세어 본 결과를 공개합니다. 데이터 수집과 가공을 대신해 드립니다."
+    description = f"공공데이터와 공개 API에서 자료를 모아 직접 세어 본 결과를 공개합니다. {SERVICE_HEADLINE}"
     latest_image = SITE_URL + posts[0]["featured_image"] if posts and posts[0].get("featured_image") else None
     schema = {
         "@context": "https://schema.org",
@@ -302,7 +305,7 @@ def render_index(posts: list[dict]) -> str:
 
   <section class="service-panel" aria-labelledby="service-heading">
     <p class="eyebrow">데이터 수집·가공</p>
-    <h2 id="service-heading">흩어진 자료를 쓸 수 있는 데이터로 바꿉니다.</h2>
+    <h2 id="service-heading">{SERVICE_HEADLINE}</h2>
     <p>여러 사이트에 흩어진 자료를 모아 엑셀이나 데이터베이스로 정리하고, 반복 수집 프로그램도 만듭니다.</p>
     <a class="text-link" href="mailto:{CONTACT}">{CONTACT} <span aria-hidden="true">→</span></a>
   </section>
@@ -348,7 +351,9 @@ def render_feed(posts: list[dict]) -> str:
     for post in posts:
         url = SITE_URL + post["path"]
         published = format_datetime(datetime.fromisoformat(post["date"]))
-        body = post["body_html"].replace("]]>", "]]]]><![CDATA[>")
+        body = post["body_html"].replace(
+            OLD_ARTICLE_SERVICE_HEADLINE, SERVICE_HEADLINE
+        ).replace("]]>", "]]]]><![CDATA[>")
         items.append(f"""<item>
   <title>{esc(post["title"])}</title>
   <link>{esc(url)}</link>

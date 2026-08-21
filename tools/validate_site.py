@@ -14,6 +14,8 @@ from bs4 import BeautifulSoup
 ROOT = Path(__file__).resolve().parents[1]
 SITE = "https://golgong.github.io"
 NEW_EMAIL = "golgong@kakao.com"
+SERVICE_HEADLINE = "필요한 자료를 대신 분석해 드립니다."
+OLD_ARTICLE_SERVICE_HEADLINE = "골때리는공작소는 이런 일을 대신해 드립니다."
 EMAIL_PATTERN = re.compile(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", re.IGNORECASE)
 EXPECTED_ROBOTS = (
     "User-agent: *\nAllow: /\nDisallow: /data/\nDisallow: /tools/\n\n"
@@ -90,6 +92,10 @@ def main() -> None:
         fail("generated HTML contains an unexpected contact email set")
     if "golgong.wordpress.com/wp-content" in public_blob:
         fail("WordPress media hotlink remains")
+    if OLD_ARTICLE_SERVICE_HEADLINE in public_blob:
+        fail("old service headline remains in generated HTML")
+    if public_blob.count(SERVICE_HEADLINE) < len(posts) + 1:
+        fail("new service headline is missing from generated HTML")
 
     home = BeautifulSoup((ROOT / "index.html").read_text(encoding="utf-8"), "html.parser")
     about_page = BeautifulSoup((ROOT / "about" / "index.html").read_text(encoding="utf-8"), "html.parser")
@@ -118,6 +124,8 @@ def main() -> None:
         fail(f"home links differ: {home_paths ^ expected_paths}")
     if len(home.select(".featured-story")) != 1 or len(home.select(".story-card")) != 3 or len(home.select(".archive-row")) != 10:
         fail("home editorial layout mismatch")
+    if home.select_one("#service-heading").get_text(" ", strip=True) != SERVICE_HEADLINE:
+        fail("home service headline mismatch")
     visible_summaries = home.select(".featured-story__body > p:not(.eyebrow), .story-card p")
     if len(visible_summaries) != 4 or any(
         not re.search(r"[.!?]$", summary.get_text(" ", strip=True)) for summary in visible_summaries
@@ -167,7 +175,11 @@ def main() -> None:
         source_body = BeautifulSoup(post["body_html"], "html.parser")
         if text_hash(source_body) != post["text_sha256"]:
             fail(f"source article text hash changed: {post['slug']}")
-        if text_counter(article_body) != text_counter(source_body):
+        public_source_body = BeautifulSoup(
+            post["body_html"].replace(OLD_ARTICLE_SERVICE_HEADLINE, SERVICE_HEADLINE),
+            "html.parser",
+        )
+        if text_counter(article_body) != text_counter(public_source_body):
             fail(f"visible article text changed: {post['slug']}")
         direct_children = [node for node in article_body.children if getattr(node, "name", None)]
         if (
@@ -242,7 +254,12 @@ def main() -> None:
     for item in feed_items:
         url = item.findtext("link")
         body = item.findtext("description") or ""
-        if text_hash(BeautifulSoup(body, "html.parser")) != posts_by_url[url]["text_sha256"]:
+        post = posts_by_url[url]
+        expected_body = BeautifulSoup(
+            post["body_html"].replace(OLD_ARTICLE_SERVICE_HEADLINE, SERVICE_HEADLINE),
+            "html.parser",
+        )
+        if text_counter(BeautifulSoup(body, "html.parser")) != text_counter(expected_body):
             fail(f"feed does not contain the full article body: {url}")
 
     manifest = json.loads((ROOT / "migration-manifest.json").read_text(encoding="utf-8"))
