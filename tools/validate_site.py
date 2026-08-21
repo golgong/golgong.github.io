@@ -165,9 +165,16 @@ def main() -> None:
         fail("cross-host sitemap URL")
 
     feed_root = ET.parse(ROOT / "feed.xml").getroot()
-    feed_links = {node.text for node in feed_root.findall("channel/item/link")}
+    feed_items = feed_root.findall("channel/item")
+    feed_links = {node.findtext("link") for node in feed_items}
     if feed_links != {SITE + p["path"] for p in posts}:
         fail("feed item links mismatch")
+    posts_by_url = {SITE + post["path"]: post for post in posts}
+    for item in feed_items:
+        url = item.findtext("link")
+        body = item.findtext("description") or ""
+        if text_hash(BeautifulSoup(body, "html.parser")) != posts_by_url[url]["text_sha256"]:
+            fail(f"feed does not contain the full article body: {url}")
 
     manifest = json.loads((ROOT / "migration-manifest.json").read_text(encoding="utf-8"))
     if manifest["post_count"] != 14 or set(manifest["paths"]) != expected_paths:

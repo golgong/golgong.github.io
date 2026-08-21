@@ -258,12 +258,13 @@ def render_feed(posts: list[dict]) -> str:
     for post in posts:
         url = SITE_URL + post["path"]
         published = format_datetime(datetime.fromisoformat(post["date"]))
+        body = post["body_html"].replace("]]>", "]]]]><![CDATA[>")
         items.append(f"""<item>
   <title>{esc(post["title"])}</title>
   <link>{esc(url)}</link>
   <guid isPermaLink="true">{esc(url)}</guid>
   <pubDate>{published}</pubDate>
-  <description>{esc(post["description"])}</description>
+  <description><![CDATA[{body}]]></description>
 </item>""")
     return f"""<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
