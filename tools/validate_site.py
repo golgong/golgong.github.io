@@ -5,6 +5,7 @@ import json
 import re
 import urllib.parse
 import xml.etree.ElementTree as ET
+from collections import Counter
 from pathlib import Path
 
 from bs4 import BeautifulSoup
@@ -14,6 +15,16 @@ ROOT = Path(__file__).resolve().parents[1]
 SITE = "https://golgong.github.io"
 NEW_EMAIL = "golgong@kakao.com"
 EMAIL_PATTERN = re.compile(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", re.IGNORECASE)
+EXPECTED_ROBOTS = (
+    "User-agent: *\nAllow: /\nDisallow: /data/\nDisallow: /tools/\n\n"
+    "Sitemap: https://golgong.github.io/sitemap.xml\n"
+)
+VERIFICATION_FILES = {
+    "naver7bbde15a7e92af038251ebca890908dc.html":
+        "naver-site-verification: naver7bbde15a7e92af038251ebca890908dc.html\n",
+    "googlefacd3b2ba31cd754.html":
+        "google-site-verification: googlefacd3b2ba31cd754.html\n",
+}
 
 
 def fail(message: str) -> None:
@@ -23,6 +34,10 @@ def fail(message: str) -> None:
 def text_hash(node) -> str:
     visible = re.sub(r"\s+", " ", node.get_text(" ", strip=True)).strip()
     return hashlib.sha256(visible.encode("utf-8")).hexdigest()
+
+
+def text_counter(node) -> Counter[str]:
+    return Counter(re.sub(r"\s+", " ", text).strip() for text in node.stripped_strings)
 
 
 def local_file(url: str) -> Path | None:
@@ -60,6 +75,15 @@ def main() -> None:
     if actual_article_files != expected_article_files:
         fail("stale or missing article HTML files")
 
+    for relative, expected in VERIFICATION_FILES.items():
+        path = ROOT / relative
+        if not path.is_file() or path.read_text(encoding="utf-8") != expected:
+            fail(f"search verification file changed: {relative}")
+    if not (ROOT / ".nojekyll").is_file() or (ROOT / ".nojekyll").read_bytes() != b"":
+        fail(".nojekyll missing or changed")
+    if (ROOT / "robots.txt").read_text(encoding="utf-8") != EXPECTED_ROBOTS:
+        fail("robots.txt content mismatch")
+
     public_blob = "\n".join(path.read_text(encoding="utf-8") for path in html_files)
     emails = {match.group(0).lower() for match in EMAIL_PATTERN.finditer(public_blob)}
     if emails != {NEW_EMAIL}:
@@ -69,20 +93,45 @@ def main() -> None:
 
     home = BeautifulSoup((ROOT / "index.html").read_text(encoding="utf-8"), "html.parser")
     about_page = BeautifulSoup((ROOT / "about" / "index.html").read_text(encoding="utf-8"), "html.parser")
+    if text_hash(about_page.select_one(".article-body")) != data["about"]["text_sha256"]:
+        fail("visible about text changed")
+    if len(about_page.select("h2.about-section-title")) != 7:
+        fail("about section heading structure mismatch")
     for name, page in (("home", home), ("about", about_page)):
         og_image = page.find("meta", attrs={"property": "og:image"})
         if not og_image or local_file(og_image.get("content", "")) is None:
             fail(f"local Open Graph image missing: {name}")
         if not local_file(og_image["content"]).is_file():
             fail(f"Open Graph image file missing: {name}")
+    if home.find("link", rel="canonical").get("href") != SITE + "/":
+        fail("home canonical mismatch")
+    if about_page.find("link", rel="canonical").get("href") != SITE + "/about/":
+        fail("about canonical mismatch")
     not_found = BeautifulSoup((ROOT / "404.html").read_text(encoding="utf-8"), "html.parser")
     robots = not_found.find("meta", attrs={"name": "robots"})
     if not robots or robots.get("content") != "noindex,follow":
         fail("404 page must be noindex,follow")
-    home_paths = {a.get("href") for a in home.select(".post-card h2 a")}
+    home_links = home.select("a[data-post-link]")
+    home_paths = {a.get("href") for a in home_links}
     expected_paths = {p["path"] for p in posts}
-    if home_paths != expected_paths:
+    if len(home_links) != len(posts) or home_paths != expected_paths:
         fail(f"home links differ: {home_paths ^ expected_paths}")
+    if len(home.select(".featured-story")) != 1 or len(home.select(".story-card")) != 3 or len(home.select(".archive-row")) != 10:
+        fail("home editorial layout mismatch")
+    visible_summaries = home.select(".featured-story__body > p:not(.eyebrow), .story-card p")
+    if len(visible_summaries) != 4 or any(
+        not re.search(r"[.!?]$", summary.get_text(" ", strip=True)) for summary in visible_summaries
+    ):
+        fail("home contains an incomplete visible summary")
+
+    for path in html_files:
+        soup = BeautifulSoup(path.read_text(encoding="utf-8"), "html.parser")
+        if soup.html.get("lang") != "ko":
+            fail(f"document language missing: {path}")
+        main = soup.select_one("main#main-content")
+        skip = soup.select_one('a.skip-link[href="#main-content"]')
+        if main is None or skip is None:
+            fail(f"skip navigation missing: {path}")
 
     table_total = 0
     expected_canonicals = {SITE + "/", SITE + "/about/"}
@@ -93,8 +142,8 @@ def main() -> None:
         expected_canonicals.add(canonical)
         if len(soup.find_all("h1")) != 1 or soup.h1.get_text(" ", strip=True) != post["title"]:
             fail(f"h1 mismatch: {post['slug']}")
-        if not soup.find("h2"):
-            fail(f"no h2 in article: {post['slug']}")
+        if soup.select_one(".article-header .article-dek") is not None:
+            fail(f"search excerpt exposed in article header: {post['slug']}")
         canonical_tag = soup.find("link", rel="canonical")
         og_url = soup.find("meta", attrs={"property": "og:url"})
         og_type = soup.find("meta", attrs={"property": "og:type"})
@@ -115,11 +164,26 @@ def main() -> None:
         if description != post["description"] or not 50 <= len(description) <= 170:
             fail(f"description mismatch: {post['slug']}")
         article_body = soup.select_one(".article-body")
-        if text_hash(article_body) != post["text_sha256"]:
+        source_body = BeautifulSoup(post["body_html"], "html.parser")
+        if text_hash(source_body) != post["text_sha256"]:
+            fail(f"source article text hash changed: {post['slug']}")
+        if text_counter(article_body) != text_counter(source_body):
             fail(f"visible article text changed: {post['slug']}")
+        direct_children = [node for node in article_body.children if getattr(node, "name", None)]
+        if (
+            not direct_children
+            or "article-note" not in direct_children[0].get("class", [])
+            or "article-contact" not in direct_children[-1].get("class", [])
+        ):
+            fail(f"article source/contact order mismatch: {post['slug']}")
         tables = len(article_body.find_all("table"))
         if tables != post["table_count"]:
             fail(f"table count mismatch: {post['slug']}")
+        table_regions = article_body.select('figure.wp-block-table[tabindex="0"][role="region"][aria-label]')
+        if len(table_regions) != tables:
+            fail(f"keyboard-accessible table regions missing: {post['slug']}")
+        if any(region.has_attr("style") for region in table_regions):
+            fail(f"conflicting inline table layout remains: {post['slug']}")
         table_total += tables
 
     if table_total != 73:
@@ -158,7 +222,10 @@ def main() -> None:
 
     sitemap_root = ET.parse(ROOT / "sitemap.xml").getroot()
     ns = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
-    sitemap_urls = {node.text for node in sitemap_root.findall("sm:url/sm:loc", ns)}
+    sitemap_nodes = sitemap_root.findall("sm:url/sm:loc", ns)
+    sitemap_urls = {node.text for node in sitemap_nodes}
+    if len(sitemap_nodes) != len(expected_canonicals):
+        fail("sitemap URL count mismatch")
     if sitemap_urls != expected_canonicals:
         fail(f"sitemap mismatch: {sitemap_urls ^ expected_canonicals}")
     if any(not url.startswith(SITE + "/") for url in sitemap_urls):
@@ -166,6 +233,8 @@ def main() -> None:
 
     feed_root = ET.parse(ROOT / "feed.xml").getroot()
     feed_items = feed_root.findall("channel/item")
+    if len(feed_items) != len(posts):
+        fail("feed item count mismatch")
     feed_links = {node.findtext("link") for node in feed_items}
     if feed_links != {SITE + p["path"] for p in posts}:
         fail("feed item links mismatch")
@@ -179,6 +248,13 @@ def main() -> None:
     manifest = json.loads((ROOT / "migration-manifest.json").read_text(encoding="utf-8"))
     if manifest["post_count"] != 14 or set(manifest["paths"]) != expected_paths:
         fail("migration manifest mismatch")
+    expected_manifest_files = {
+        "index.html", "about/index.html", "404.html", "feed.xml", "sitemap.xml",
+        "robots.txt", "assets/css/site.css",
+        *(post["path"].lstrip("/") + "index.html" for post in posts),
+    }
+    if set(manifest["files"]) != expected_manifest_files:
+        fail("migration manifest file set mismatch")
     for relative, expected_hash in manifest["files"].items():
         path = ROOT / relative
         if hashlib.sha256(path.read_bytes()).hexdigest() != expected_hash:
