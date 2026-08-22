@@ -204,7 +204,7 @@ def site_header(active: str = "") -> str:
 def site_footer() -> str:
     return f"""<footer class="site-footer">
   <div class="site-footer__inner">
-    <div><strong>{SITE_NAME}</strong><p>공공데이터와 공개 API에서 자료를 모아 직접 세어 봅니다.</p></div>
+    <div><strong>{SITE_NAME}</strong><p>공공데이터와 공개 API에서 자료를 모아 정확히 분석합니다.</p></div>
     <nav aria-label="사이트 안내">
       <a href="/about/">작업 방식과 문의</a>
       <a href="/privacy/">방문 분석 안내</a>
@@ -288,7 +288,7 @@ def render_article(post: dict, posts: list[dict]) -> str:
 
 
 def render_index(posts: list[dict]) -> str:
-    description = f"공공데이터와 공개 API에서 자료를 모아 직접 세어 본 결과를 공개합니다. {SERVICE_HEADLINE}"
+    description = f"공공데이터와 공개 API에서 자료를 모아 정확히 분석한 결과를 공개합니다. {SERVICE_HEADLINE}"
     home_og = SITE_URL + HOME_OG
     schema = {
         "@context": "https://schema.org",
@@ -326,7 +326,7 @@ def render_index(posts: list[dict]) -> str:
 </article>""")
 
     return f"""{page_head(
-        title=f"{SITE_NAME} — 공공데이터를 직접 세어 봅니다",
+        title=f"{SITE_NAME} — 공공데이터를 정확히 분석합니다",
         description=description, canonical=SITE_URL + "/", og_type="website",
         image=home_og, image_alt=f"{SITE_NAME} — 아무도 세어 보지 않은 것을 끝까지 확인합니다",
         image_width=1200, image_height=630, image_type="image/jpeg", schema=schema,
@@ -339,8 +339,7 @@ def render_index(posts: list[dict]) -> str:
   <section class="home-manifesto" aria-label="골때리는공작소 소개">
     <figure class="home-hero"><img src="{HOME_HERO}" alt="{SITE_NAME} — 아무도 세어 보지 않은 것을 끝까지 확인합니다" width="1448" height="1086" fetchpriority="high" decoding="async"></figure>
     <div class="home-manifesto__copy">
-      <p>우리가 당연하다고 여긴 것이 데이터에서도 맞는지 확인합니다.</p>
-      <p>공공데이터와 공개 API를 직접 분석하고, 결과가 나온 과정과 한계까지 함께 공개합니다.</p>
+      <p>공공데이터와 공개 API에서 자료를 모아 정확히 분석합니다.</p>
       <a class="outline-link" href="#records">전체 기록 보기</a>
     </div>
   </section>
@@ -374,7 +373,7 @@ def render_index(posts: list[dict]) -> str:
 
 
 def render_about(about: dict) -> str:
-    description = "골때리는공작소는 공공데이터와 공개 API에서 자료를 모아 세어 보고, 확인된 결과를 공개합니다."
+    description = "골때리는공작소는 공공데이터와 공개 API에서 자료를 모아 정확히 분석하고, 확인된 결과를 공개합니다."
     image_match = re.search(r'<img\b[^>]*\bsrc="([^"]+)"', about["body_html"])
     image = SITE_URL + image_match.group(1) if image_match else None
     schema = {
@@ -458,7 +457,7 @@ def render_feed(posts: list[dict]) -> str:
 <channel>
   <title>{SITE_NAME}</title>
   <link>{SITE_URL}/</link>
-  <description>공공데이터와 공개 API에서 자료를 모아 직접 세어 본 결과</description>
+  <description>공공데이터와 공개 API에서 자료를 모아 정확히 분석한 결과</description>
   <language>ko-KR</language>
   <atom:link href="{SITE_URL}/feed.xml" rel="self" type="application/rss+xml" />
   {''.join(items)}

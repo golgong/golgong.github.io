@@ -190,13 +190,13 @@ def main() -> None:
         fail("obsolete home decoration remains")
     if home.select_one(".home-manifesto .home-hero") is None:
         fail("home manifesto layout missing")
-    manifesto_text = home.select_one(".home-manifesto__copy").get_text(" ", strip=True)
-    for sentence in (
-        "우리가 당연하다고 여긴 것이 데이터에서도 맞는지 확인합니다.",
-        "공공데이터와 공개 API를 직접 분석하고, 결과가 나온 과정과 한계까지 함께 공개합니다.",
+    manifesto_paragraphs = home.select(".home-manifesto__copy > p")
+    if (
+        len(manifesto_paragraphs) != 1
+        or manifesto_paragraphs[0].get_text(" ", strip=True)
+        != "공공데이터와 공개 API에서 자료를 모아 정확히 분석합니다."
     ):
-        if sentence not in manifesto_text:
-            fail("home manifesto copy mismatch")
+        fail("home manifesto copy mismatch")
     journal_rows = home.select(".journal-row")
     if (
         len(journal_rows) != len(posts)
