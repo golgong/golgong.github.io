@@ -5,7 +5,7 @@
   const measurementNode = document.querySelector('meta[name="google-analytics-id"]');
   const measurementId = measurementNode ? measurementNode.content.trim() : "";
   const validMeasurementId = /^G-[A-Z0-9]{6,20}$/.test(measurementId);
-  let analyticsLoaded = false;
+  let pageViewSent = false;
 
   function readChoice() {
     try { return localStorage.getItem(consentKey); } catch (_) { return null; }
@@ -28,24 +28,17 @@
     window[`ga-disable-${measurementId}`] = disabled;
   }
 
-  function loadAnalytics() {
+  function grantAnalytics() {
     if (!validMeasurementId) return;
     setAnalyticsDisabled(false);
-    window.dataLayer = window.dataLayer || [];
-    window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+    if (typeof window.gtag !== "function") return;
     window.gtag("consent", "update", { analytics_storage: "granted" });
-    if (analyticsLoaded) return;
-    analyticsLoaded = true;
-    window.gtag("js", new Date());
-    window.gtag("config", measurementId, {
-      allow_google_signals: false,
-      allow_ad_personalization_signals: false
+    if (pageViewSent) return;
+    pageViewSent = true;
+    window.gtag("event", "page_view", {
+      page_location: window.location.href,
+      page_title: document.title
     });
-    const script = document.createElement("script");
-    script.async = true;
-    script.id = "google-analytics-tag";
-    script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
-    document.head.appendChild(script);
   }
 
   function clearAnalyticsCookies() {
@@ -65,7 +58,7 @@
   function chooseAnalytics(value) {
     saveChoice(value);
     if (value === "granted") {
-      loadAnalytics();
+      grantAnalytics();
     } else {
       setAnalyticsDisabled(true);
       if (typeof window.gtag === "function") {
@@ -85,7 +78,7 @@
     panel.setAttribute("aria-label", "방문 분석 설정");
 
     const message = document.createElement("p");
-    message.textContent = "이 사이트는 Google Analytics를 사용합니다. 허용하기 전에는 분석 정보를 보내지 않습니다.";
+    message.textContent = "이 사이트는 Google Analytics를 사용합니다. 허용하기 전에는 방문 분석 이벤트를 보내거나 분석 쿠키를 저장하지 않습니다.";
     panel.appendChild(message);
 
     const actions = document.createElement("div");
@@ -113,7 +106,7 @@
     });
     updateChoiceText();
     const choice = readChoice();
-    if (choice === "granted") loadAnalytics();
+    if (choice === "granted") grantAnalytics();
     if (choice !== "granted" && choice !== "denied") showConsentPanel(false);
   }
 

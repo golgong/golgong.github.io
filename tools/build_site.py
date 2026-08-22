@@ -137,6 +137,24 @@ def page_head(*, title: str, description: str, canonical: str, og_type: str,
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#f3f0e9">
 <meta name="google-analytics-id" content="{esc(GA_MEASUREMENT_ID)}">
+<script>
+window.dataLayer = window.dataLayer || [];
+window.gtag = window.gtag || function(){{window.dataLayer.push(arguments);}};
+window["ga-disable-{GA_MEASUREMENT_ID}"] = true;
+window.gtag("consent", "default", {{
+  analytics_storage: "denied",
+  ad_storage: "denied",
+  ad_user_data: "denied",
+  ad_personalization: "denied"
+}});
+window.gtag("js", new Date());
+window.gtag("config", "{GA_MEASUREMENT_ID}", {{
+  send_page_view: false,
+  allow_google_signals: false,
+  allow_ad_personalization_signals: false
+}});
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id={GA_MEASUREMENT_ID}"></script>
 <script defer src="/assets/js/site.js?v={SITE_JS_VERSION}"></script>
 <title>{esc(title)}</title>
 <meta name="description" content="{esc(description)}">
@@ -398,7 +416,7 @@ def render_privacy() -> str:
       <h2>공개하는 통계</h2>
       <p>첫 화면에는 Google Analytics에서 측정된 최근 7일의 분석 허용 활성 사용자 수와 직전 7일 대비 변화만 표시합니다. 한 사람이 여러 기기나 브라우저를 사용하면 서로 다른 사용자로 집계될 수 있습니다. 페이지별 방문, 유입어, 위치, 기기, 방문 시각은 공개하지 않습니다. 분석 허용 활성 사용자가 5명 미만이면 정확한 숫자와 추이를 숨깁니다.</p>
       <h2>허용과 거부</h2>
-      <p>허용하기 전에는 Google Analytics를 불러오지 않습니다. 허용하면 Google Analytics가 <code>_ga</code>로 시작하는 쿠키를 최대 2년간 사용할 수 있습니다. 허용 여부는 이 브라우저의 로컬 저장소에 보관하며, 설정을 바꾸거나 브라우저 저장 정보를 지울 때까지 유지됩니다. 언제든 아래 버튼에서 설정을 바꿀 수 있습니다.</p>
+      <p>Google 태그 파일은 페이지를 열 때 불러오지만, 허용하기 전에는 방문 분석 이벤트를 보내거나 분석 쿠키를 저장하지 않습니다. 허용하면 Google Analytics가 <code>_ga</code>로 시작하는 쿠키를 최대 2년간 사용할 수 있습니다. 허용 여부는 이 브라우저의 로컬 저장소에 보관하며, 설정을 바꾸거나 브라우저 저장 정보를 지울 때까지 유지됩니다. 언제든 아래 버튼에서 설정을 바꿀 수 있습니다.</p>
       <p class="analytics-choice" data-analytics-choice>현재 설정을 확인하고 있습니다.</p>
       <p><button class="settings-button" type="button" data-analytics-settings>방문 분석 설정 열기</button></p>
       <h2>문의</h2>
@@ -1139,7 +1157,7 @@ SITE_JS = r"""
   const measurementNode = document.querySelector('meta[name="google-analytics-id"]');
   const measurementId = measurementNode ? measurementNode.content.trim() : "";
   const validMeasurementId = /^G-[A-Z0-9]{6,20}$/.test(measurementId);
-  let analyticsLoaded = false;
+  let pageViewSent = false;
 
   function readChoice() {
     try { return localStorage.getItem(consentKey); } catch (_) { return null; }
@@ -1162,24 +1180,17 @@ SITE_JS = r"""
     window[`ga-disable-${measurementId}`] = disabled;
   }
 
-  function loadAnalytics() {
+  function grantAnalytics() {
     if (!validMeasurementId) return;
     setAnalyticsDisabled(false);
-    window.dataLayer = window.dataLayer || [];
-    window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+    if (typeof window.gtag !== "function") return;
     window.gtag("consent", "update", { analytics_storage: "granted" });
-    if (analyticsLoaded) return;
-    analyticsLoaded = true;
-    window.gtag("js", new Date());
-    window.gtag("config", measurementId, {
-      allow_google_signals: false,
-      allow_ad_personalization_signals: false
+    if (pageViewSent) return;
+    pageViewSent = true;
+    window.gtag("event", "page_view", {
+      page_location: window.location.href,
+      page_title: document.title
     });
-    const script = document.createElement("script");
-    script.async = true;
-    script.id = "google-analytics-tag";
-    script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
-    document.head.appendChild(script);
   }
 
   function clearAnalyticsCookies() {
@@ -1199,7 +1210,7 @@ SITE_JS = r"""
   function chooseAnalytics(value) {
     saveChoice(value);
     if (value === "granted") {
-      loadAnalytics();
+      grantAnalytics();
     } else {
       setAnalyticsDisabled(true);
       if (typeof window.gtag === "function") {
@@ -1219,7 +1230,7 @@ SITE_JS = r"""
     panel.setAttribute("aria-label", "방문 분석 설정");
 
     const message = document.createElement("p");
-    message.textContent = "이 사이트는 Google Analytics를 사용합니다. 허용하기 전에는 분석 정보를 보내지 않습니다.";
+    message.textContent = "이 사이트는 Google Analytics를 사용합니다. 허용하기 전에는 방문 분석 이벤트를 보내거나 분석 쿠키를 저장하지 않습니다.";
     panel.appendChild(message);
 
     const actions = document.createElement("div");
@@ -1247,7 +1258,7 @@ SITE_JS = r"""
     });
     updateChoiceText();
     const choice = readChoice();
-    if (choice === "granted") loadAnalytics();
+    if (choice === "granted") grantAnalytics();
     if (choice !== "granted" && choice !== "denied") showConsentPanel(false);
   }
 

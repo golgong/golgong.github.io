@@ -166,9 +166,23 @@ def main() -> None:
         if main is None or skip is None:
             fail(f"skip navigation missing: {path}")
         analytics_meta = soup.find_all("meta", attrs={"name": "google-analytics-id"})
+        analytics_scripts = soup.find_all(
+            "script",
+            src=f"https://www.googletagmanager.com/gtag/js?id={measurement_id}",
+        )
         site_scripts = soup.find_all("script", src=re.compile(r"^/assets/js/site\.js\?v="))
         if len(analytics_meta) != 1 or analytics_meta[0].get("content") != measurement_id:
             fail(f"Google Analytics measurement ID mismatch: {path}")
+        if len(analytics_scripts) != 1 or not analytics_scripts[0].has_attr("async"):
+            fail(f"Google Analytics tag is not statically detectable: {path}")
+        head_text = path.read_text(encoding="utf-8")
+        if (
+            f'window["ga-disable-{measurement_id}"] = true;' not in head_text
+            or 'window.gtag("consent", "default"' not in head_text
+            or 'analytics_storage: "denied"' not in head_text
+            or 'send_page_view: false' not in head_text
+        ):
+            fail(f"Google Analytics consent bootstrap mismatch: {path}")
         if len(site_scripts) != 1:
             fail(f"site JavaScript loader mismatch: {path}")
         if soup.select_one("[data-analytics-settings]") is None:
@@ -245,7 +259,7 @@ def main() -> None:
             url = element.get(attribute)
             if url.startswith(("http://", "https://")):
                 host = urllib.parse.urlsplit(url).netloc
-                if host not in {"golgong.github.io", "schema.org"}:
+                if host not in {"golgong.github.io", "schema.org", "www.googletagmanager.com"}:
                     fail(f"unexpected external resource/link in {path}: {url}")
             candidate = local_file(url)
             if candidate is not None and not candidate.is_file():
@@ -302,11 +316,15 @@ def main() -> None:
         fail("site typography exceeds the approved maximum font weight")
     if "font-synthesis: none" not in site_css:
         fail("synthetic bold protection is missing")
-    if site_js.count("https://www.googletagmanager.com/gtag/js") != 1:
-        fail("Google Analytics dynamic loader mismatch")
+    if "https://www.googletagmanager.com/gtag/js" in site_js:
+        fail("Google Analytics must not be injected dynamically")
     if "innerHTML" in site_js:
         fail("site JavaScript must not render visitor data with innerHTML")
-    if "ga-disable-${measurementId}" not in site_js or 'analytics_storage: "granted"' not in site_js:
+    if (
+        "ga-disable-${measurementId}" not in site_js
+        or 'analytics_storage: "granted"' not in site_js
+        or 'window.gtag("event", "page_view"' not in site_js
+    ):
         fail("Google Analytics consent revocation or restoration is missing")
     expected_css_href = f"/assets/css/site.css?v={hashlib.sha256(site_css.encode('utf-8')).hexdigest()[:12]}"
     expected_js_src = f"/assets/js/site.js?v={hashlib.sha256(site_js.encode('utf-8')).hexdigest()[:12]}"
