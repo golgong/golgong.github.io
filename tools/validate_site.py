@@ -16,8 +16,8 @@ from update_visitor_stats import validate_summary
 ROOT = Path(__file__).resolve().parents[1]
 SITE = "https://golgong.github.io"
 SITE_NAME = "골때리는공작소"
-HOME_HERO = "/assets/images/home/hero-v3.jpg"
-HOME_OG = "/assets/images/home/og-v3.jpg"
+HOME_HERO = "/assets/images/home/hero-v4.jpg"
+HOME_OG = "/assets/images/home/og-v4.jpg"
 HOME_OG_ALT = f"{SITE_NAME} — 아무도 세어 보지 않은 것을 끝까지 확인합니다"
 NEW_EMAIL = "golgong@kakao.com"
 GA_MEASUREMENT_ID_PATTERN = re.compile(r"G-[A-Z0-9]{6,20}")
@@ -331,8 +331,8 @@ def main() -> None:
             if candidate is not None and not candidate.is_file():
                 fail(f"broken internal link in {path}: {url}")
 
-    if len(data["images"]) != 65:
-        fail(f"expected 65 image records, got {len(data['images'])}")
+    if len(data["images"]) != 95:
+        fail(f"expected 95 image records, got {len(data['images'])}")
     expected_images = {(ROOT / image["path"].lstrip("/")).resolve() for image in data["images"]}
     actual_images = {path.resolve() for path in (ROOT / "assets" / "images").rglob("*") if path.is_file()}
     if actual_images != expected_images:
@@ -428,7 +428,7 @@ def main() -> None:
         if hashlib.sha256(path.read_bytes()).hexdigest() != expected_hash:
             fail(f"generated file changed after build: {relative}")
 
-    print("VALIDATED posts=14 tables=73 images=65 sitemap=16 feed=14 links=ok seo=ok")
+    print("VALIDATED posts=14 tables=73 images=95 sitemap=16 feed=14 links=ok seo=ok")
 
 
 if __name__ == "__main__":

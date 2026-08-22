@@ -12,6 +12,7 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parents[1]
 DATA_PATH = ROOT / "data" / "blog.json"
 SOURCE_DIR = ROOT / "tools" / "cover_sources"
+SOURCE_V2_DIR = ROOT / "tools" / "cover_sources_v2"
 SYSTEM_FONT = Path(r"C:\Windows\Fonts\NotoSansKR-VF.ttf")
 BRAND = "골때리는공작소"
 SITE = "golgong.github.io"
@@ -54,12 +55,12 @@ def cover_html(
 * {{ box-sizing: border-box; }}
 html, body {{ margin: 0; width: {width}px; height: {height}px; overflow: hidden; background: #111719; }}
 .cover {{ position: relative; width: 100%; height: 100%; overflow: hidden; color: #f7f3ea; background: #111719; }}
-.art {{ position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }}
+.art {{ position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; filter: brightness(1.04) saturate(.96); }}
 .cover::before {{
   content: ""; position: absolute; inset: 0; z-index: 1;
   background:
-    linear-gradient(180deg, rgba(9,12,11,.58) 0%, rgba(9,12,11,.08) 30%, rgba(9,12,11,.20) 48%, rgba(8,10,9,.92) 100%),
-    linear-gradient(90deg, rgba(8,10,9,.52) 0%, rgba(8,10,9,.12) 58%, rgba(8,10,9,.04) 100%);
+    linear-gradient(180deg, rgba(17,23,22,.56) 0%, rgba(17,23,22,.14) 18%, rgba(17,23,22,.02) 38%, rgba(17,23,22,.02) 54%, rgba(15,19,18,.72) 100%),
+    linear-gradient(90deg, rgba(17,23,22,.10) 0%, rgba(17,23,22,0) 58%);
 }}
 .cover::after {{ content: ""; position: absolute; inset: 18px; z-index: 2; border: 1px solid rgba(247,243,234,.18); pointer-events: none; }}
 .mast {{ position: absolute; z-index: 3; top: {safe_top}px; left: {safe_x}px; right: {safe_x}px; display: flex; align-items: center; justify-content: space-between; font-family: CoverSystem, sans-serif; font-weight: 400; }}
@@ -135,11 +136,12 @@ def main() -> None:
         browser = playwright.chromium.launch(channel="msedge", headless=True)
         page = browser.new_page(device_scale_factor=1)
         for post in posts:
-            source = SOURCE_DIR / f"{post['slug']}.webp"
+            refreshed_source = SOURCE_V2_DIR / f"{post['slug']}.png"
+            source = refreshed_source if refreshed_source.is_file() else SOURCE_DIR / f"{post['slug']}.webp"
             if not source.is_file():
                 raise SystemExit(f"missing source image: {source}")
             target_dir = ROOT / "assets" / "images" / post["slug"]
-            version = "v3"
+            version = "v4"
             featured = target_dir / f"featured-{version}.jpg"
             og = target_dir / f"og-{version}.jpg"
             post["featured_image"] = "/" + featured.relative_to(ROOT).as_posix()
@@ -149,10 +151,11 @@ def main() -> None:
             render(page, source=source, lines=title, label="DATA RECORD", output=og, width=1200, height=630)
             outputs.extend((featured, og))
 
-        home_source = SOURCE_DIR / "home.png"
+        refreshed_home = SOURCE_V2_DIR / "home.png"
+        home_source = refreshed_home if refreshed_home.is_file() else SOURCE_DIR / "home.png"
         home_dir = ROOT / "assets" / "images" / "home"
-        home_featured = home_dir / "hero-v3.jpg"
-        home_og = home_dir / "og-v3.jpg"
+        home_featured = home_dir / "hero-v4.jpg"
+        home_og = home_dir / "og-v4.jpg"
         home_lines = ["아무도 세어 보지 않은 것을 끝까지 확인합니다"]
         render(page, source=home_source, lines=home_lines, label="INDEPENDENT DATA JOURNAL", output=home_featured, width=1448, height=1086)
         render(page, source=home_source, lines=home_lines, label="INDEPENDENT DATA JOURNAL", output=home_og, width=1200, height=630)
@@ -178,7 +181,7 @@ def main() -> None:
             kind = "editorial-cover" if parts[-1].startswith("featured-") else "editorial-og"
         data["images"].append(
             {
-                "source": f"render:{kind}:{slug}:2026-08-22-v3",
+                "source": f"render:{kind}:{slug}:2026-08-22-v4",
                 "path": path,
                 "sha256": digest,
             }

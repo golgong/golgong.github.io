@@ -39,7 +39,7 @@
     "/2026/08/15/one-person-households-top-districts/"
   ],
   "files": {
-    "index.html": "50f5c12644a488f4a27ebae78358f6c57787d1cb9a8a393ba2787af25ff4e38d",
+    "index.html": "714f4e2c015f82edc20867654ca1d30d52ba5beb3035af56ee7b2719be53304a",
     "about/index.html": "a6092a3bfb0ab0c2adb6357cbaa492552d630b77f0ec11b7b6972dd055a641c8",
     "privacy/index.html": "034bfee8c6379e055bab4e38e699ea05a620fc06a8bf5e1e5347797830104415",
     "feed.xml": "13f61e9f9b8c97af8ffb8d4a806b7ea17223f58740bdcdbf60d22438de4c6a23",
@@ -48,19 +48,19 @@
     "404.html": "d2778a8477579a65677cdef0ce197bb200e65b025dd4ed0fb1a2fe2882db2fc9",
     "assets/css/site.css": "ddfa1f1f62b776efda048961cc940b24e4d7170dea6e12df376f82fc66bbc916",
     "assets/js/site.js": "967b0bdce37d1ce08c35e0ed7272e1dae85f0988d6ee63adbb254504f204c784",
-    "2026/08/20/baby-names-seoul/index.html": "40176abe22aea74b8b384522f887475c3e74b5d2a76fde6426fd197effcfa1b5",
-    "2026/08/20/most-used-medicines-korea/index.html": "87a5bb99698459ff3384832f96e847754a5798f2f082fbcb6346dfdd0c03f14a",
-    "2026/08/19/what-119-actually-does/index.html": "7c6fc91a1edc26dc82925b65bf0ebc1824fbc6c0225ec2895fdfd0bb9b62a0c8",
-    "2026/08/19/manual-therapy-price-gap/index.html": "8603b1e2a3710481a5b0aab16b5a9375c6dbcb05f962f5461d4fe3b07942ba49",
-    "2026/08/19/cosmetic-medical-keyword-ad-cost/index.html": "b44ae1badbbc3066164db9df6deb0bf932064821031f68773f6160f5f611a642",
-    "2026/08/19/dental-clinic-review-count/index.html": "9e2d5e2dbb990e941fbb4281f4248c15a56a59f590a2b49eb123ee5bb20a6ff2",
-    "2026/08/18/dermatology-review-count/index.html": "ad9b0da4ec1ef787cd8c4f7455866a4cd5603bcd4e664d97f2cb6bb076f899ee",
-    "2026/08/18/orthopedics-review-count/index.html": "1f96511d8c138dfabce19be26f0697894a2c3e584544539e4a33639ceb90f82f",
-    "2026/08/18/hospital-keyword-ad-cost/index.html": "56faac32c77972719d307425174f1af481d1bbb114e87d55381d66131525bc9f",
-    "2026/08/17/internal-medicine-review-count/index.html": "172cd18cfa874286cd3a37f6e40788a51807d9d06cef4cd9127b3fa605f68560",
-    "2026/08/16/clinic-location-by-specialty/index.html": "c829962609f53cd9eff228ce2ba49141ae5f1907171db2d3582a5c2e52475c10",
-    "2026/08/16/clinic-open-by-specialty/index.html": "068605230f7a7d6cfe100d36be28467b57d91c2081b05c07dd001ba40c67318f",
-    "2026/08/16/ad-depth-ctr/index.html": "352e17f3d09ae5d27e57ea8400bfd248c02cf3a2129b9baf3ce338593e6d90bc",
-    "2026/08/15/one-person-households-top-districts/index.html": "3e57f4938a04f5c318b5c6312629d95aa0d927022ae7535590ae40a6b90a7327"
+    "2026/08/20/baby-names-seoul/index.html": "c55b71009677702146e4c008efd77aa61a989fd35096323a8b88856fcc69fb83",
+    "2026/08/20/most-used-medicines-korea/index.html": "d9daa22cb781cb04a648ef29de49edb85eabab681abacbd579c71fd235f302dc",
+    "2026/08/19/what-119-actually-does/index.html": "29691293f6c4e4ac6a21468663ddbad235c30600928c0e50b4699542714d421d",
+    "2026/08/19/manual-therapy-price-gap/index.html": "ae2c90dd18d67cd8ccfdd8fa558f4567d796c181d950aaa7195794f469487f36",
+    "2026/08/19/cosmetic-medical-keyword-ad-cost/index.html": "5e3f1752f81ced4edbc018574f2977c81467bb712c1acc30bd44d3dc5e28f008",
+    "2026/08/19/dental-clinic-review-count/index.html": "4d81d4028cb07edf8f07d340543c6ee0462ac44d9f9e0a2a99bfd7d6febfc8ce",
+    "2026/08/18/dermatology-review-count/index.html": "ad48142bcb6ecc8093fce5fe115a940d4394ac63889c498d63b38726f305c26e",
+    "2026/08/18/orthopedics-review-count/index.html": "df7933354e00934ec010434b5a2077cb870635628ca9e549ff589e6c4bfef5f6",
+    "2026/08/18/hospital-keyword-ad-cost/index.html": "8d0b2f99daf43873ec63f124ce24feccde80dafc254c4d7ec24070452761c9e6",
+    "2026/08/17/internal-medicine-review-count/index.html": "7646096c8bd64a1d5110e94e16e4a047da0f499eca0c9cd4396c7671ba3e398e",
+    "2026/08/16/clinic-location-by-specialty/index.html": "5b9fe71a7b1fdd8cd81b02507143abd9d9c4f65f535b091bc7f195215e0cbc15",
+    "2026/08/16/clinic-open-by-specialty/index.html": "181de34035fbb6c31e46906af5521fbd3068c5cae09ddfcada98483e322eb336",
+    "2026/08/16/ad-depth-ctr/index.html": "4cba3d2af77127e1d9f2e052995d654928c39153026726cd0b5f495b88cd51b5",
+    "2026/08/15/one-person-households-top-districts/index.html": "223c229eba0f6ffb7938d286d2523d4166fb62aa1d5507b9ead36161a6ee7e6c"
   }
 }
