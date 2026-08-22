@@ -10,10 +10,13 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 
+from update_visitor_stats import validate_summary
+
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE = "https://golgong.github.io"
 NEW_EMAIL = "golgong@kakao.com"
+GTM_CONTAINER_ID_PATTERN = re.compile(r"GTM-[A-Z0-9]{6,20}")
 SERVICE_HEADLINE = "필요한 자료를 대신 분석해 드립니다."
 OLD_ARTICLE_SERVICE_HEADLINE = "골때리는공작소는 이런 일을 대신해 드립니다."
 EMAIL_PATTERN = re.compile(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", re.IGNORECASE)
@@ -65,7 +68,10 @@ def main() -> None:
     if len({p["description"] for p in posts}) != 14:
         fail("post descriptions are not unique")
 
-    html_files = [ROOT / "index.html", ROOT / "about" / "index.html", ROOT / "404.html"]
+    html_files = [
+        ROOT / "index.html", ROOT / "about" / "index.html",
+        ROOT / "privacy" / "index.html", ROOT / "404.html",
+    ]
     html_files.extend(ROOT / p["path"].lstrip("/") / "index.html" for p in posts)
     missing = [str(path) for path in html_files if not path.is_file()]
     if missing:
@@ -86,6 +92,14 @@ def main() -> None:
     if (ROOT / "robots.txt").read_text(encoding="utf-8") != EXPECTED_ROBOTS:
         fail("robots.txt content mismatch")
 
+    analytics_config = json.loads((ROOT / "data" / "analytics.json").read_text(encoding="utf-8"))
+    if set(analytics_config) != {"container_id"}:
+        fail("analytics config keys mismatch")
+    container_id = str(analytics_config["container_id"] or "").strip().upper()
+    if not GTM_CONTAINER_ID_PATTERN.fullmatch(container_id):
+        fail("invalid Google Tag Manager container ID")
+    validate_summary(json.loads((ROOT / "data" / "visitor-stats.json").read_text(encoding="utf-8")))
+
     public_blob = "\n".join(path.read_text(encoding="utf-8") for path in html_files)
     emails = {match.group(0).lower() for match in EMAIL_PATTERN.finditer(public_blob)}
     if emails != {NEW_EMAIL}:
@@ -99,6 +113,7 @@ def main() -> None:
 
     home = BeautifulSoup((ROOT / "index.html").read_text(encoding="utf-8"), "html.parser")
     about_page = BeautifulSoup((ROOT / "about" / "index.html").read_text(encoding="utf-8"), "html.parser")
+    privacy_page = BeautifulSoup((ROOT / "privacy" / "index.html").read_text(encoding="utf-8"), "html.parser")
     if text_hash(about_page.select_one(".article-body")) != data["about"]["text_sha256"]:
         fail("visible about text changed")
     if len(about_page.select("h2.about-section-title")) != 7:
@@ -113,6 +128,13 @@ def main() -> None:
         fail("home canonical mismatch")
     if about_page.find("link", rel="canonical").get("href") != SITE + "/about/":
         fail("about canonical mismatch")
+    if privacy_page.find("link", rel="canonical").get("href") != SITE + "/privacy/":
+        fail("privacy canonical mismatch")
+    privacy_robots = privacy_page.find("meta", attrs={"name": "robots"})
+    if not privacy_robots or privacy_robots.get("content") != "noindex,follow":
+        fail("privacy page must be noindex,follow")
+    if privacy_page.select_one("[data-analytics-settings]") is None:
+        fail("privacy analytics settings control missing")
     not_found = BeautifulSoup((ROOT / "404.html").read_text(encoding="utf-8"), "html.parser")
     robots = not_found.find("meta", attrs={"name": "robots"})
     if not robots or robots.get("content") != "noindex,follow":
@@ -124,6 +146,9 @@ def main() -> None:
         fail(f"home links differ: {home_paths ^ expected_paths}")
     if len(home.select(".featured-story")) != 1 or len(home.select(".story-card")) != 3 or len(home.select(".archive-row")) != 10:
         fail("home editorial layout mismatch")
+    visitor_strip = home.select_one("[data-visitor-stats]")
+    if visitor_strip is None or visitor_strip.select_one("[data-visitor-summary]") is None:
+        fail("home visitor statistics strip missing")
     if home.select_one("#service-heading").get_text(" ", strip=True) != SERVICE_HEADLINE:
         fail("home service headline mismatch")
     visible_summaries = home.select(".featured-story__body > p:not(.eyebrow), .story-card p")
@@ -140,6 +165,14 @@ def main() -> None:
         skip = soup.select_one('a.skip-link[href="#main-content"]')
         if main is None or skip is None:
             fail(f"skip navigation missing: {path}")
+        analytics_meta = soup.find_all("meta", attrs={"name": "google-tag-manager-id"})
+        site_scripts = soup.find_all("script", src=re.compile(r"^/assets/js/site\.js\?v="))
+        if len(analytics_meta) != 1 or analytics_meta[0].get("content") != container_id:
+            fail(f"Google Tag Manager container ID mismatch: {path}")
+        if len(site_scripts) != 1:
+            fail(f"site JavaScript loader mismatch: {path}")
+        if soup.select_one("[data-analytics-settings]") is None:
+            fail(f"analytics settings control missing: {path}")
 
     table_total = 0
     expected_canonicals = {SITE + "/", SITE + "/about/"}
@@ -263,24 +296,36 @@ def main() -> None:
             fail(f"feed does not contain the full article body: {url}")
 
     site_css = (ROOT / "assets" / "css" / "site.css").read_text(encoding="utf-8")
+    site_js = (ROOT / "assets" / "js" / "site.js").read_text(encoding="utf-8")
     numeric_weights = [int(weight) for weight in re.findall(r"font-weight:\s*(\d+)", site_css)]
     if numeric_weights and max(numeric_weights) > 500:
         fail("site typography exceeds the approved maximum font weight")
     if "font-synthesis: none" not in site_css:
         fail("synthetic bold protection is missing")
+    if site_js.count("https://www.googletagmanager.com/gtm.js") != 1:
+        fail("Google Tag Manager dynamic loader mismatch")
+    if "innerHTML" in site_js:
+        fail("site JavaScript must not render visitor data with innerHTML")
+    if 'if (mustReload) location.reload();' not in site_js:
+        fail("Google Tag Manager consent revocation reload is missing")
     expected_css_href = f"/assets/css/site.css?v={hashlib.sha256(site_css.encode('utf-8')).hexdigest()[:12]}"
+    expected_js_src = f"/assets/js/site.js?v={hashlib.sha256(site_js.encode('utf-8')).hexdigest()[:12]}"
     for path in html_files:
         soup = BeautifulSoup(path.read_text(encoding="utf-8"), "html.parser")
         stylesheet = soup.find("link", rel="stylesheet")
         if stylesheet is None or stylesheet.get("href") != expected_css_href:
             fail(f"stylesheet cache key mismatch: {path}")
+        script = soup.find("script", src=re.compile(r"^/assets/js/site\.js\?v="))
+        if script is None or script.get("src") != expected_js_src:
+            fail(f"JavaScript cache key mismatch: {path}")
 
     manifest = json.loads((ROOT / "migration-manifest.json").read_text(encoding="utf-8"))
     if manifest["post_count"] != 14 or set(manifest["paths"]) != expected_paths:
         fail("migration manifest mismatch")
     expected_manifest_files = {
-        "index.html", "about/index.html", "404.html", "feed.xml", "sitemap.xml",
-        "robots.txt", "assets/css/site.css",
+        "index.html", "about/index.html", "privacy/index.html", "404.html",
+        "feed.xml", "sitemap.xml", "robots.txt", "assets/css/site.css",
+        "assets/js/site.js",
         *(post["path"].lstrip("/") + "index.html" for post in posts),
     }
     if set(manifest["files"]) != expected_manifest_files:

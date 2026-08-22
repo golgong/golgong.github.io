@@ -7,4 +7,5 @@ wp_token.json
 .env
 *.pem
 *.key
+gha-creds-*.json
 .*.tmp

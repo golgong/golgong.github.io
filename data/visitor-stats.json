@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "status": "collecting",
+  "metric": "activeUsers",
+  "throughDate": null,
+  "updatedAt": null,
+  "current7Days": null,
+  "previous7Days": null,
+  "changeVisitors": null,
+  "weeklyVisitors": []
+}

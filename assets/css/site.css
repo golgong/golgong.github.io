@@ -141,10 +141,50 @@ time, table { font-variant-numeric: tabular-nums; }
   font-size: 18px;
   line-height: 1.72;
 }
+[hidden] { display: none !important; }
+.visitor-strip {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px 18px;
+  min-height: 66px;
+  margin-top: 18px;
+  padding: 13px 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 253, 250, .66);
+}
+.visitor-strip p { margin: 0; }
+.visitor-strip__label {
+  color: var(--accent-dark);
+  font-size: 12px;
+  letter-spacing: .08em;
+}
+.visitor-strip__summary { font-size: 14px; }
+.visitor-strip__trend {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.visitor-strip__date { color: var(--muted); font-size: 12px; }
+.visitor-bars {
+  display: inline-flex;
+  align-items: end;
+  gap: 3px;
+  width: 34px;
+  height: 22px;
+}
+.visitor-bars > span {
+  width: 6px;
+  min-height: 3px;
+  background: var(--accent);
+  opacity: .72;
+}
 .featured-story {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(320px, .65fr);
-  margin-top: 60px;
+  margin-top: 36px;
   border: 1px solid var(--line);
   background: var(--surface);
 }
@@ -476,6 +516,50 @@ figcaption {
 }
 .about-shell .article-header { margin-bottom: 56px; }
 .about-section-title { color: var(--accent-dark); }
+.privacy-copy h2:first-child { margin-top: 0; }
+.settings-button,
+.site-footer button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent-dark);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.settings-button { padding: 9px 13px; border: 1px solid var(--line); text-decoration: none; }
+.analytics-choice { color: var(--muted); font-size: 14px; }
+.consent-panel {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 120;
+  width: min(520px, calc(100% - 48px));
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--accent);
+  background: var(--surface);
+  box-shadow: 0 18px 52px rgba(27, 28, 26, .18);
+}
+.consent-panel p { margin: 0; font-size: 14px; line-height: 1.65; }
+.consent-actions { display: flex; align-items: center; gap: 9px; margin-top: 16px; }
+.consent-actions button {
+  min-height: 40px;
+  padding: 8px 15px;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  cursor: pointer;
+}
+.consent-actions button + button { background: transparent; color: var(--ink); }
+.consent-actions a { margin-left: auto; font-size: 12px; }
 .site-footer {
   padding: 42px 0 48px;
   border-top: 1px solid var(--line);
@@ -491,6 +575,7 @@ figcaption {
 }
 .site-footer strong { color: var(--ink); font-size: 15px; font-weight: inherit; }
 .site-footer p { margin: 4px 0 0; font-size: 13px; }
+.site-footer nav { display: flex; align-items: center; gap: 18px; }
 .site-footer a { font-size: 13px; font-weight: 500; }
 @media (max-width: 900px) {
   .home-intro { grid-template-columns: 1fr; gap: 24px; }
@@ -519,7 +604,12 @@ figcaption {
   .home-intro { padding-bottom: 42px; }
   .home-intro h1 { font-size: clamp(36px, 11vw, 46px); }
   .home-intro > p { font-size: 16px; }
-  .featured-story { margin-top: 38px; }
+  .visitor-strip { grid-template-columns: 1fr auto; gap: 5px 12px; }
+  .visitor-strip__label { grid-column: 1; }
+  .visitor-strip__summary { grid-column: 1 / -1; grid-row: 2; }
+  .visitor-strip__trend { grid-column: 1; grid-row: 3; }
+  .visitor-strip__date { grid-column: 2; grid-row: 1; }
+  .featured-story { margin-top: 28px; }
   .featured-story__body { padding: 26px 22px 28px; }
   .featured-story h2 { font-size: 31px; }
   .story-meta { align-items: flex-end; }
@@ -574,6 +664,10 @@ figcaption {
   .post-nav-wrap { margin-top: 58px; }
   .post-nav { grid-template-columns: 1fr; }
   .site-footer__inner { align-items: flex-start; flex-direction: column; gap: 18px; }
+  .site-footer nav { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .consent-panel { right: 12px; bottom: 12px; width: calc(100% - 24px); }
+  .consent-actions { align-items: stretch; flex-wrap: wrap; }
+  .consent-actions a { width: 100%; margin: 3px 0 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

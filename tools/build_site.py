@@ -13,12 +13,27 @@ from urllib.parse import urljoin
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_FILE = ROOT / "data" / "blog.json"
+ANALYTICS_CONFIG_FILE = ROOT / "data" / "analytics.json"
 SITE_URL = "https://golgong.github.io"
 SITE_NAME = "골때리는공작소"
 CONTACT = "golgong@kakao.com"
 SERVICE_HEADLINE = "필요한 자료를 대신 분석해 드립니다."
 OLD_ARTICLE_SERVICE_HEADLINE = "골때리는공작소는 이런 일을 대신해 드립니다."
 EMAIL_PATTERN = re.compile(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", re.IGNORECASE)
+GTM_CONTAINER_ID_PATTERN = re.compile(r"GTM-[A-Z0-9]{6,20}")
+
+
+def load_gtm_container_id() -> str:
+    config = json.loads(ANALYTICS_CONFIG_FILE.read_text(encoding="utf-8"))
+    if set(config) != {"container_id"}:
+        raise RuntimeError("analytics config keys mismatch")
+    container_id = str(config["container_id"] or "").strip().upper()
+    if not GTM_CONTAINER_ID_PATTERN.fullmatch(container_id):
+        raise RuntimeError("invalid Google Tag Manager container ID")
+    return container_id
+
+
+GTM_CONTAINER_ID = load_gtm_container_id()
 
 
 def esc(value: object) -> str:
@@ -121,6 +136,8 @@ def page_head(*, title: str, description: str, canonical: str, og_type: str,
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#f3f0e9">
+<meta name="google-tag-manager-id" content="{esc(GTM_CONTAINER_ID)}">
+<script defer src="/assets/js/site.js?v={SITE_JS_VERSION}"></script>
 <title>{esc(title)}</title>
 <meta name="description" content="{esc(description)}">
 <meta name="robots" content="{esc(robots)}">
@@ -157,7 +174,11 @@ def site_footer() -> str:
     return f"""<footer class="site-footer">
   <div class="site-footer__inner">
     <div><strong>{SITE_NAME}</strong><p>공공데이터와 공개 API에서 자료를 모아 직접 세어 봅니다.</p></div>
-    <a href="/about/">작업 방식과 문의</a>
+    <nav aria-label="사이트 안내">
+      <a href="/about/">작업 방식과 문의</a>
+      <a href="/privacy/">방문 분석 안내</a>
+      <button type="button" data-analytics-settings>분석 설정</button>
+    </nav>
   </div>
 </footer>"""
 
@@ -283,6 +304,16 @@ def render_index(posts: list[dict]) -> str:
     <p>공공데이터와 공개 API에서 자료를 모아 직접 세어 보고, 확인된 결과만 씁니다.</p>
   </section>
 
+  <section class="visitor-strip" aria-label="방문 분석 통계" data-visitor-stats>
+    <p class="visitor-strip__label">방문 기록</p>
+    <p class="visitor-strip__summary" data-visitor-summary aria-live="polite">분석을 허용한 방문을 집계하고 있습니다.</p>
+    <div class="visitor-strip__trend" data-visitor-trend hidden>
+      <span data-visitor-change></span>
+      <span class="visitor-bars" data-visitor-bars hidden></span>
+    </div>
+    <time class="visitor-strip__date" data-visitor-date></time>
+  </section>
+
   <section class="featured-story" aria-labelledby="featured-heading">
     <a class="featured-story__image" href="{esc(featured["path"])}" tabindex="-1" aria-hidden="true">{featured_thumb}</a>
     <div class="featured-story__body">
@@ -338,6 +369,41 @@ def render_about(about: dict) -> str:
   <article>
     <header class="article-header"><p class="eyebrow">소개</p><h1>{SITE_NAME}</h1><p class="article-dek">공개된 자료를 모으고, 확인하고, 다시 쓸 수 있는 형태로 정리합니다.</p></header>
     <div class="article-body">{enhance_about(about["body_html"])}</div>
+  </article>
+</main>
+{site_footer()}
+</body>
+</html>
+"""
+
+
+def render_privacy() -> str:
+    description = "골때리는공작소의 Google Analytics 사용 범위와 방문 분석 설정을 안내합니다."
+    return f"""{page_head(
+        title=f"방문 분석 안내 | {SITE_NAME}", description=description,
+        canonical=SITE_URL + "/privacy/", og_type="website", robots="noindex,follow",
+    )}
+<body>
+{site_header()}
+<main id="main-content" class="article-shell privacy-shell" tabindex="-1">
+  <article>
+    <header class="article-header">
+      <p class="eyebrow">방문 분석 안내</p>
+      <h1>Google Analytics 사용</h1>
+      <p class="article-dek">방문 흐름을 확인하고 사이트를 다듬기 위해, 허용한 경우에만 Google Analytics를 사용합니다.</p>
+    </header>
+    <div class="article-body privacy-copy">
+      <h2>수집하는 정보</h2>
+      <p>페이지 주소, 방문 시각, 브라우저와 기기 종류, 대략적인 지역 정보가 Google에 전송될 수 있습니다. 이름, 이메일 주소, 전화번호는 분석 정보로 보내지 않습니다.</p>
+      <h2>공개하는 통계</h2>
+      <p>첫 화면에는 Google Analytics에서 측정된 최근 7일의 분석 허용 활성 사용자 수와 직전 7일 대비 변화만 표시합니다. 한 사람이 여러 기기나 브라우저를 사용하면 서로 다른 사용자로 집계될 수 있습니다. 페이지별 방문, 유입어, 위치, 기기, 방문 시각은 공개하지 않습니다. 분석 허용 활성 사용자가 5명 미만이면 정확한 숫자와 추이를 숨깁니다.</p>
+      <h2>허용과 거부</h2>
+      <p>허용하기 전에는 Google Tag Manager와 Google Analytics를 불러오지 않습니다. 허용하면 Google Analytics가 <code>_ga</code>로 시작하는 쿠키를 최대 2년간 사용할 수 있습니다. 허용 여부는 이 브라우저의 로컬 저장소에 보관하며, 설정을 바꾸거나 브라우저 저장 정보를 지울 때까지 유지됩니다. 언제든 아래 버튼에서 설정을 바꿀 수 있습니다.</p>
+      <p class="analytics-choice" data-analytics-choice>현재 설정을 확인하고 있습니다.</p>
+      <p><button class="settings-button" type="button" data-analytics-settings>방문 분석 설정 열기</button></p>
+      <h2>문의</h2>
+      <p>방문 분석에 관한 문의는 <a href="mailto:{CONTACT}">{CONTACT}</a>으로 보내 주십시오.</p>
+    </div>
   </article>
 </main>
 {site_footer()}
@@ -533,10 +599,50 @@ time, table { font-variant-numeric: tabular-nums; }
   font-size: 18px;
   line-height: 1.72;
 }
+[hidden] { display: none !important; }
+.visitor-strip {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px 18px;
+  min-height: 66px;
+  margin-top: 18px;
+  padding: 13px 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 253, 250, .66);
+}
+.visitor-strip p { margin: 0; }
+.visitor-strip__label {
+  color: var(--accent-dark);
+  font-size: 12px;
+  letter-spacing: .08em;
+}
+.visitor-strip__summary { font-size: 14px; }
+.visitor-strip__trend {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.visitor-strip__date { color: var(--muted); font-size: 12px; }
+.visitor-bars {
+  display: inline-flex;
+  align-items: end;
+  gap: 3px;
+  width: 34px;
+  height: 22px;
+}
+.visitor-bars > span {
+  width: 6px;
+  min-height: 3px;
+  background: var(--accent);
+  opacity: .72;
+}
 .featured-story {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(320px, .65fr);
-  margin-top: 60px;
+  margin-top: 36px;
   border: 1px solid var(--line);
   background: var(--surface);
 }
@@ -868,6 +974,50 @@ figcaption {
 }
 .about-shell .article-header { margin-bottom: 56px; }
 .about-section-title { color: var(--accent-dark); }
+.privacy-copy h2:first-child { margin-top: 0; }
+.settings-button,
+.site-footer button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent-dark);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.settings-button { padding: 9px 13px; border: 1px solid var(--line); text-decoration: none; }
+.analytics-choice { color: var(--muted); font-size: 14px; }
+.consent-panel {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 120;
+  width: min(520px, calc(100% - 48px));
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--accent);
+  background: var(--surface);
+  box-shadow: 0 18px 52px rgba(27, 28, 26, .18);
+}
+.consent-panel p { margin: 0; font-size: 14px; line-height: 1.65; }
+.consent-actions { display: flex; align-items: center; gap: 9px; margin-top: 16px; }
+.consent-actions button {
+  min-height: 40px;
+  padding: 8px 15px;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  cursor: pointer;
+}
+.consent-actions button + button { background: transparent; color: var(--ink); }
+.consent-actions a { margin-left: auto; font-size: 12px; }
 .site-footer {
   padding: 42px 0 48px;
   border-top: 1px solid var(--line);
@@ -883,6 +1033,7 @@ figcaption {
 }
 .site-footer strong { color: var(--ink); font-size: 15px; font-weight: inherit; }
 .site-footer p { margin: 4px 0 0; font-size: 13px; }
+.site-footer nav { display: flex; align-items: center; gap: 18px; }
 .site-footer a { font-size: 13px; font-weight: 500; }
 @media (max-width: 900px) {
   .home-intro { grid-template-columns: 1fr; gap: 24px; }
@@ -911,7 +1062,12 @@ figcaption {
   .home-intro { padding-bottom: 42px; }
   .home-intro h1 { font-size: clamp(36px, 11vw, 46px); }
   .home-intro > p { font-size: 16px; }
-  .featured-story { margin-top: 38px; }
+  .visitor-strip { grid-template-columns: 1fr auto; gap: 5px 12px; }
+  .visitor-strip__label { grid-column: 1; }
+  .visitor-strip__summary { grid-column: 1 / -1; grid-row: 2; }
+  .visitor-strip__trend { grid-column: 1; grid-row: 3; }
+  .visitor-strip__date { grid-column: 2; grid-row: 1; }
+  .featured-story { margin-top: 28px; }
   .featured-story__body { padding: 26px 22px 28px; }
   .featured-story h2 { font-size: 31px; }
   .story-meta { align-items: flex-end; }
@@ -966,11 +1122,216 @@ figcaption {
   .post-nav-wrap { margin-top: 58px; }
   .post-nav { grid-template-columns: 1fr; }
   .site-footer__inner { align-items: flex-start; flex-direction: column; gap: 18px; }
+  .site-footer nav { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .consent-panel { right: 12px; bottom: 12px; width: calc(100% - 24px); }
+  .consent-actions { align-items: stretch; flex-wrap: wrap; }
+  .consent-actions a { width: 100%; margin: 3px 0 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
 }
 """
+SITE_JS = r"""
+(() => {
+  "use strict";
+
+  const consentKey = "golgong-analytics-consent";
+  const containerNode = document.querySelector('meta[name="google-tag-manager-id"]');
+  const containerId = containerNode ? containerNode.content.trim() : "";
+  const validContainerId = /^GTM-[A-Z0-9]{6,20}$/.test(containerId);
+  let tagManagerLoaded = false;
+
+  function readChoice() {
+    try { return localStorage.getItem(consentKey); } catch (_) { return null; }
+  }
+
+  function saveChoice(value) {
+    try { localStorage.setItem(consentKey, value); } catch (_) { /* keep this visit only */ }
+  }
+
+  function updateChoiceText() {
+    const node = document.querySelector("[data-analytics-choice]");
+    if (!node) return;
+    if (!validContainerId) {
+      node.textContent = "방문 분석이 아직 시작되지 않았습니다.";
+      return;
+    }
+    const choice = readChoice();
+    node.textContent = choice === "granted"
+      ? "현재 설정: 허용"
+      : choice === "denied" ? "현재 설정: 거부" : "현재 설정: 선택 전";
+  }
+
+  function loadTagManager() {
+    if (!validContainerId || tagManagerLoaded) return;
+    tagManagerLoaded = true;
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
+    const script = document.createElement("script");
+    script.async = true;
+    script.id = "google-tag-manager";
+    script.src = `https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(containerId)}`;
+    document.head.appendChild(script);
+  }
+
+  function clearAnalyticsCookies() {
+    document.cookie.split(";").forEach((item) => {
+      const name = item.split("=")[0].trim();
+      if (!name.startsWith("_ga")) return;
+      document.cookie = `${name}=; Max-Age=0; path=/; SameSite=Lax`;
+      document.cookie = `${name}=; Max-Age=0; path=/; domain=.${location.hostname}; SameSite=Lax`;
+    });
+  }
+
+  function closeConsentPanel() {
+    const panel = document.querySelector(".consent-panel");
+    if (panel) panel.remove();
+  }
+
+  function chooseAnalytics(value) {
+    saveChoice(value);
+    if (value === "granted") {
+      loadTagManager();
+      updateChoiceText();
+      closeConsentPanel();
+      return;
+    }
+    const mustReload = tagManagerLoaded;
+    if (typeof window.gtag === "function") {
+      window.gtag("consent", "update", { analytics_storage: "denied" });
+    }
+    clearAnalyticsCookies();
+    updateChoiceText();
+    closeConsentPanel();
+    if (mustReload) location.reload();
+  }
+
+  function showConsentPanel(shouldFocus = false) {
+    if (!validContainerId) return;
+    closeConsentPanel();
+    const panel = document.createElement("section");
+    panel.className = "consent-panel";
+    panel.setAttribute("aria-label", "방문 분석 설정");
+
+    const message = document.createElement("p");
+    message.textContent = "이 사이트는 Google Tag Manager를 통해 Google Analytics를 사용합니다. 허용하기 전에는 분석 정보를 보내지 않습니다.";
+    panel.appendChild(message);
+
+    const actions = document.createElement("div");
+    actions.className = "consent-actions";
+    const allow = document.createElement("button");
+    allow.type = "button";
+    allow.textContent = "허용";
+    allow.addEventListener("click", () => chooseAnalytics("granted"));
+    const deny = document.createElement("button");
+    deny.type = "button";
+    deny.textContent = "거부";
+    deny.addEventListener("click", () => chooseAnalytics("denied"));
+    const policy = document.createElement("a");
+    policy.href = "/privacy/";
+    policy.textContent = "자세히 보기";
+    actions.append(allow, deny, policy);
+    panel.appendChild(actions);
+    document.body.appendChild(panel);
+    if (shouldFocus) allow.focus();
+  }
+
+  function initAnalytics() {
+    document.querySelectorAll("[data-analytics-settings]").forEach((button) => {
+      if (!validContainerId) button.hidden = true;
+      button.addEventListener("click", () => showConsentPanel(true));
+    });
+    updateChoiceText();
+    if (!validContainerId) return;
+    const choice = readChoice();
+    if (choice === "granted") loadTagManager();
+    if (choice !== "granted" && choice !== "denied") showConsentPanel(false);
+  }
+
+  function requireCount(value) {
+    return Number.isSafeInteger(value) && value >= 0 ? value : null;
+  }
+
+  function formatDate(value) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || "");
+    if (!match) return "";
+    return `${Number(match[2])}월 ${Number(match[3])}일까지`;
+  }
+
+  function drawWeeklyBars(node, values) {
+    node.replaceChildren();
+    const visible = values.filter((value) => value !== null);
+    if (visible.length < 2) {
+      node.hidden = true;
+      return;
+    }
+    const maximum = Math.max(...visible, 1);
+    values.forEach((value) => {
+      const bar = document.createElement("span");
+      bar.style.height = value === null ? "3px" : `${Math.max(3, Math.round(value / maximum * 22))}px`;
+      bar.style.opacity = value === null ? ".2" : ".72";
+      node.appendChild(bar);
+    });
+    node.hidden = false;
+    node.setAttribute("role", "img");
+    node.setAttribute("aria-label", `최근 4주 분석 허용 방문자 ${values.map((value) => value === null ? "5명 미만" : `${value}명`).join(", ")}`);
+  }
+
+  async function initVisitorStats() {
+    const root = document.querySelector("[data-visitor-stats]");
+    if (!root) return;
+    try {
+      const response = await fetch("/data/visitor-stats.json", { cache: "no-store" });
+      if (!response.ok) throw new Error("visitor stats unavailable");
+      const stats = await response.json();
+      const summary = root.querySelector("[data-visitor-summary]");
+      const trend = root.querySelector("[data-visitor-trend]");
+      const changeNode = root.querySelector("[data-visitor-change]");
+      const bars = root.querySelector("[data-visitor-bars]");
+      const dateNode = root.querySelector("[data-visitor-date]");
+      dateNode.textContent = formatDate(stats.throughDate);
+
+      if (stats.status === "collecting") return;
+      if (stats.status === "low_volume") {
+        summary.textContent = "최근 7일 분석 허용 방문자 5명 미만";
+        trend.hidden = true;
+        return;
+      }
+      const visitors = requireCount(stats.current7Days && stats.current7Days.visitors);
+      const pageViews = requireCount(stats.current7Days && stats.current7Days.pageViews);
+      if (stats.status !== "ok" || visitors === null || pageViews === null) throw new Error("invalid visitor stats");
+      const number = new Intl.NumberFormat("ko-KR");
+      summary.textContent = `최근 7일 분석 허용 방문자 ${number.format(visitors)}명 · 페이지 조회 ${number.format(pageViews)}회`;
+
+      const change = Number.isSafeInteger(stats.changeVisitors) ? stats.changeVisitors : null;
+      if (change === null) {
+        changeNode.textContent = "비교할 이전 기간이 없습니다.";
+      } else if (change > 0) {
+        changeNode.textContent = `지난 7일보다 ${number.format(change)}명 늘었습니다.`;
+      } else if (change < 0) {
+        changeNode.textContent = `지난 7일보다 ${number.format(Math.abs(change))}명 줄었습니다.`;
+      } else {
+        changeNode.textContent = "지난 7일과 같습니다.";
+      }
+      const weeklySource = stats.weeklyVisitors;
+      if (!Array.isArray(weeklySource) || weeklySource.length !== 4) throw new Error("invalid weekly visitor stats");
+      const weekly = weeklySource.map((value) => value === null ? null : requireCount(value));
+      if (weekly.some((value, index) => value === null && weeklySource[index] !== null)) {
+        throw new Error("invalid weekly visitor count");
+      }
+      drawWeeklyBars(bars, weekly);
+      trend.hidden = false;
+    } catch (_) {
+      root.hidden = true;
+    }
+  }
+
+  initAnalytics();
+  initVisitorStats();
+})();
+"""
+SITE_JS_VERSION = hashlib.sha256((SITE_JS.strip() + "\n").encode("utf-8")).hexdigest()[:12]
+
 CSS_VERSION = hashlib.sha256((CSS.strip() + "\n").encode("utf-8")).hexdigest()[:12]
 
 
@@ -999,6 +1360,7 @@ def main() -> None:
 
     write(ROOT / "index.html", render_index(posts))
     write(ROOT / "about" / "index.html", render_about(about))
+    write(ROOT / "privacy" / "index.html", render_privacy())
     for post in posts:
         output = ROOT / post["path"].lstrip("/") / "index.html"
         write(output, render_article(post, posts))
@@ -1010,11 +1372,13 @@ def main() -> None:
     )
     write(ROOT / ".nojekyll", "")
     write(ROOT / "assets" / "css" / "site.css", CSS.strip() + "\n")
+    write(ROOT / "assets" / "js" / "site.js", SITE_JS.strip() + "\n")
     write(ROOT / "404.html", f"""{page_head(title='페이지를 찾을 수 없습니다 | '+SITE_NAME, description='요청한 페이지를 찾을 수 없습니다.', canonical=SITE_URL+'/404.html', og_type='website', robots='noindex,follow')}<body>{site_header()}<main id="main-content" class="article-shell" tabindex="-1"><article><header class="article-header"><p class="eyebrow">404</p><h1>페이지를 찾을 수 없습니다</h1><p class="article-dek">주소를 다시 확인하거나 글 목록에서 원하는 내용을 찾아보십시오.</p></header><p><a class="text-link" href="/">글 목록으로 돌아가기 <span aria-hidden="true">→</span></a></p></article></main>{site_footer()}</body></html>\n""")
 
-    tracked = [ROOT / "index.html", ROOT / "about" / "index.html", ROOT / "feed.xml",
+    tracked = [ROOT / "index.html", ROOT / "about" / "index.html",
+               ROOT / "privacy" / "index.html", ROOT / "feed.xml",
                ROOT / "sitemap.xml", ROOT / "robots.txt", ROOT / "404.html",
-               ROOT / "assets" / "css" / "site.css"]
+               ROOT / "assets" / "css" / "site.css", ROOT / "assets" / "js" / "site.js"]
     tracked.extend(ROOT / p["path"].lstrip("/") / "index.html" for p in posts)
     manifest = {
         "version": 1,
