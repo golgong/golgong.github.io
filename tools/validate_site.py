@@ -16,7 +16,7 @@ from update_visitor_stats import validate_summary
 ROOT = Path(__file__).resolve().parents[1]
 SITE = "https://golgong.github.io"
 NEW_EMAIL = "golgong@kakao.com"
-GTM_CONTAINER_ID_PATTERN = re.compile(r"GTM-[A-Z0-9]{6,20}")
+GA_MEASUREMENT_ID_PATTERN = re.compile(r"G-[A-Z0-9]{6,20}")
 SERVICE_HEADLINE = "필요한 자료를 대신 분석해 드립니다."
 OLD_ARTICLE_SERVICE_HEADLINE = "골때리는공작소는 이런 일을 대신해 드립니다."
 EMAIL_PATTERN = re.compile(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", re.IGNORECASE)
@@ -93,11 +93,11 @@ def main() -> None:
         fail("robots.txt content mismatch")
 
     analytics_config = json.loads((ROOT / "data" / "analytics.json").read_text(encoding="utf-8"))
-    if set(analytics_config) != {"container_id"}:
+    if set(analytics_config) != {"measurement_id"}:
         fail("analytics config keys mismatch")
-    container_id = str(analytics_config["container_id"] or "").strip().upper()
-    if not GTM_CONTAINER_ID_PATTERN.fullmatch(container_id):
-        fail("invalid Google Tag Manager container ID")
+    measurement_id = str(analytics_config["measurement_id"] or "").strip().upper()
+    if not GA_MEASUREMENT_ID_PATTERN.fullmatch(measurement_id):
+        fail("invalid Google Analytics measurement ID")
     validate_summary(json.loads((ROOT / "data" / "visitor-stats.json").read_text(encoding="utf-8")))
 
     public_blob = "\n".join(path.read_text(encoding="utf-8") for path in html_files)
@@ -165,10 +165,10 @@ def main() -> None:
         skip = soup.select_one('a.skip-link[href="#main-content"]')
         if main is None or skip is None:
             fail(f"skip navigation missing: {path}")
-        analytics_meta = soup.find_all("meta", attrs={"name": "google-tag-manager-id"})
+        analytics_meta = soup.find_all("meta", attrs={"name": "google-analytics-id"})
         site_scripts = soup.find_all("script", src=re.compile(r"^/assets/js/site\.js\?v="))
-        if len(analytics_meta) != 1 or analytics_meta[0].get("content") != container_id:
-            fail(f"Google Tag Manager container ID mismatch: {path}")
+        if len(analytics_meta) != 1 or analytics_meta[0].get("content") != measurement_id:
+            fail(f"Google Analytics measurement ID mismatch: {path}")
         if len(site_scripts) != 1:
             fail(f"site JavaScript loader mismatch: {path}")
         if soup.select_one("[data-analytics-settings]") is None:
@@ -302,12 +302,12 @@ def main() -> None:
         fail("site typography exceeds the approved maximum font weight")
     if "font-synthesis: none" not in site_css:
         fail("synthetic bold protection is missing")
-    if site_js.count("https://www.googletagmanager.com/gtm.js") != 1:
-        fail("Google Tag Manager dynamic loader mismatch")
+    if site_js.count("https://www.googletagmanager.com/gtag/js") != 1:
+        fail("Google Analytics dynamic loader mismatch")
     if "innerHTML" in site_js:
         fail("site JavaScript must not render visitor data with innerHTML")
-    if 'if (mustReload) location.reload();' not in site_js:
-        fail("Google Tag Manager consent revocation reload is missing")
+    if "ga-disable-${measurementId}" not in site_js or 'analytics_storage: "granted"' not in site_js:
+        fail("Google Analytics consent revocation or restoration is missing")
     expected_css_href = f"/assets/css/site.css?v={hashlib.sha256(site_css.encode('utf-8')).hexdigest()[:12]}"
     expected_js_src = f"/assets/js/site.js?v={hashlib.sha256(site_js.encode('utf-8')).hexdigest()[:12]}"
     for path in html_files:

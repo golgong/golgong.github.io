@@ -1,8 +1,8 @@
-# Google Tag Manager와 Analytics 연결
+# Google Analytics 연결
 
-사이트에는 Google Tag Manager 컨테이너 `GTM-TT9XKSMX`와 공개 방문 통계 배너가 연결돼 있습니다. 서비스 계정 키는 저장소에 넣지 않습니다.
+사이트에는 Google Analytics 측정 ID `G-569GH22CPH`와 공개 방문 통계 배너가 연결돼 있습니다. 서비스 계정 키는 저장소에 넣지 않습니다.
 
-## 1. Tag Manager와 웹 데이터 스트림
+## 1. 웹 데이터 스트림
 
 Google Analytics에서 속성과 웹 데이터 스트림을 만듭니다.
 
@@ -12,7 +12,7 @@ Google Analytics에서 속성과 웹 데이터 스트림을 만듭니다.
 - 향상된 측정의 외부 링크 클릭 수집은 끕니다.
 - 광고 연결, Google Signals, 사용자 제공 데이터 수집은 사용하지 않습니다.
 
-Tag Manager 컨테이너 `GTM-TT9XKSMX`에서 Google 태그를 만들고 웹 스트림의 `G-` 측정 ID를 연결한 뒤 게시합니다. 사이트는 방문자가 분석을 허용한 뒤에만 이 컨테이너를 불러옵니다. 향상된 측정은 전부 끄고 기본 페이지 조회만 사용합니다.
+웹 스트림의 측정 ID `G-569GH22CPH`를 사이트에 직접 연결했습니다. 사이트는 방문자가 분석을 허용한 뒤에만 Google Analytics를 불러옵니다. 향상된 측정은 전부 끄고 기본 페이지 조회만 사용합니다.
 
 사이트를 다시 만들고 검증하는 명령은 다음과 같습니다.
 

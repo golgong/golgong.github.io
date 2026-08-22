@@ -2,10 +2,10 @@
   "use strict";
 
   const consentKey = "golgong-analytics-consent";
-  const containerNode = document.querySelector('meta[name="google-tag-manager-id"]');
-  const containerId = containerNode ? containerNode.content.trim() : "";
-  const validContainerId = /^GTM-[A-Z0-9]{6,20}$/.test(containerId);
-  let tagManagerLoaded = false;
+  const measurementNode = document.querySelector('meta[name="google-analytics-id"]');
+  const measurementId = measurementNode ? measurementNode.content.trim() : "";
+  const validMeasurementId = /^G-[A-Z0-9]{6,20}$/.test(measurementId);
+  let analyticsLoaded = false;
 
   function readChoice() {
     try { return localStorage.getItem(consentKey); } catch (_) { return null; }
@@ -18,25 +18,33 @@
   function updateChoiceText() {
     const node = document.querySelector("[data-analytics-choice]");
     if (!node) return;
-    if (!validContainerId) {
-      node.textContent = "방문 분석이 아직 시작되지 않았습니다.";
-      return;
-    }
     const choice = readChoice();
     node.textContent = choice === "granted"
       ? "현재 설정: 허용"
       : choice === "denied" ? "현재 설정: 거부" : "현재 설정: 선택 전";
   }
 
-  function loadTagManager() {
-    if (!validContainerId || tagManagerLoaded) return;
-    tagManagerLoaded = true;
+  function setAnalyticsDisabled(disabled) {
+    window[`ga-disable-${measurementId}`] = disabled;
+  }
+
+  function loadAnalytics() {
+    if (!validMeasurementId) return;
+    setAnalyticsDisabled(false);
     window.dataLayer = window.dataLayer || [];
-    window.dataLayer.push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
+    window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+    window.gtag("consent", "update", { analytics_storage: "granted" });
+    if (analyticsLoaded) return;
+    analyticsLoaded = true;
+    window.gtag("js", new Date());
+    window.gtag("config", measurementId, {
+      allow_google_signals: false,
+      allow_ad_personalization_signals: false
+    });
     const script = document.createElement("script");
     script.async = true;
-    script.id = "google-tag-manager";
-    script.src = `https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(containerId)}`;
+    script.id = "google-analytics-tag";
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
     document.head.appendChild(script);
   }
 
@@ -57,30 +65,27 @@
   function chooseAnalytics(value) {
     saveChoice(value);
     if (value === "granted") {
-      loadTagManager();
-      updateChoiceText();
-      closeConsentPanel();
-      return;
+      loadAnalytics();
+    } else {
+      setAnalyticsDisabled(true);
+      if (typeof window.gtag === "function") {
+        window.gtag("consent", "update", { analytics_storage: "denied" });
+      }
+      clearAnalyticsCookies();
     }
-    const mustReload = tagManagerLoaded;
-    if (typeof window.gtag === "function") {
-      window.gtag("consent", "update", { analytics_storage: "denied" });
-    }
-    clearAnalyticsCookies();
     updateChoiceText();
     closeConsentPanel();
-    if (mustReload) location.reload();
   }
 
   function showConsentPanel(shouldFocus = false) {
-    if (!validContainerId) return;
+    if (!validMeasurementId) return;
     closeConsentPanel();
     const panel = document.createElement("section");
     panel.className = "consent-panel";
     panel.setAttribute("aria-label", "방문 분석 설정");
 
     const message = document.createElement("p");
-    message.textContent = "이 사이트는 Google Tag Manager를 통해 Google Analytics를 사용합니다. 허용하기 전에는 분석 정보를 보내지 않습니다.";
+    message.textContent = "이 사이트는 Google Analytics를 사용합니다. 허용하기 전에는 분석 정보를 보내지 않습니다.";
     panel.appendChild(message);
 
     const actions = document.createElement("div");
@@ -104,13 +109,11 @@
 
   function initAnalytics() {
     document.querySelectorAll("[data-analytics-settings]").forEach((button) => {
-      if (!validContainerId) button.hidden = true;
       button.addEventListener("click", () => showConsentPanel(true));
     });
     updateChoiceText();
-    if (!validContainerId) return;
     const choice = readChoice();
-    if (choice === "granted") loadTagManager();
+    if (choice === "granted") loadAnalytics();
     if (choice !== "granted" && choice !== "denied") showConsentPanel(false);
   }
 

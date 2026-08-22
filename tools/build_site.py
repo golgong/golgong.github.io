@@ -20,20 +20,20 @@ CONTACT = "golgong@kakao.com"
 SERVICE_HEADLINE = "필요한 자료를 대신 분석해 드립니다."
 OLD_ARTICLE_SERVICE_HEADLINE = "골때리는공작소는 이런 일을 대신해 드립니다."
 EMAIL_PATTERN = re.compile(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", re.IGNORECASE)
-GTM_CONTAINER_ID_PATTERN = re.compile(r"GTM-[A-Z0-9]{6,20}")
+GA_MEASUREMENT_ID_PATTERN = re.compile(r"G-[A-Z0-9]{6,20}")
 
 
-def load_gtm_container_id() -> str:
+def load_ga_measurement_id() -> str:
     config = json.loads(ANALYTICS_CONFIG_FILE.read_text(encoding="utf-8"))
-    if set(config) != {"container_id"}:
+    if set(config) != {"measurement_id"}:
         raise RuntimeError("analytics config keys mismatch")
-    container_id = str(config["container_id"] or "").strip().upper()
-    if not GTM_CONTAINER_ID_PATTERN.fullmatch(container_id):
-        raise RuntimeError("invalid Google Tag Manager container ID")
-    return container_id
+    measurement_id = str(config["measurement_id"] or "").strip().upper()
+    if not GA_MEASUREMENT_ID_PATTERN.fullmatch(measurement_id):
+        raise RuntimeError("invalid Google Analytics measurement ID")
+    return measurement_id
 
 
-GTM_CONTAINER_ID = load_gtm_container_id()
+GA_MEASUREMENT_ID = load_ga_measurement_id()
 
 
 def esc(value: object) -> str:
@@ -136,7 +136,7 @@ def page_head(*, title: str, description: str, canonical: str, og_type: str,
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#f3f0e9">
-<meta name="google-tag-manager-id" content="{esc(GTM_CONTAINER_ID)}">
+<meta name="google-analytics-id" content="{esc(GA_MEASUREMENT_ID)}">
 <script defer src="/assets/js/site.js?v={SITE_JS_VERSION}"></script>
 <title>{esc(title)}</title>
 <meta name="description" content="{esc(description)}">
@@ -398,7 +398,7 @@ def render_privacy() -> str:
       <h2>공개하는 통계</h2>
       <p>첫 화면에는 Google Analytics에서 측정된 최근 7일의 분석 허용 활성 사용자 수와 직전 7일 대비 변화만 표시합니다. 한 사람이 여러 기기나 브라우저를 사용하면 서로 다른 사용자로 집계될 수 있습니다. 페이지별 방문, 유입어, 위치, 기기, 방문 시각은 공개하지 않습니다. 분석 허용 활성 사용자가 5명 미만이면 정확한 숫자와 추이를 숨깁니다.</p>
       <h2>허용과 거부</h2>
-      <p>허용하기 전에는 Google Tag Manager와 Google Analytics를 불러오지 않습니다. 허용하면 Google Analytics가 <code>_ga</code>로 시작하는 쿠키를 최대 2년간 사용할 수 있습니다. 허용 여부는 이 브라우저의 로컬 저장소에 보관하며, 설정을 바꾸거나 브라우저 저장 정보를 지울 때까지 유지됩니다. 언제든 아래 버튼에서 설정을 바꿀 수 있습니다.</p>
+      <p>허용하기 전에는 Google Analytics를 불러오지 않습니다. 허용하면 Google Analytics가 <code>_ga</code>로 시작하는 쿠키를 최대 2년간 사용할 수 있습니다. 허용 여부는 이 브라우저의 로컬 저장소에 보관하며, 설정을 바꾸거나 브라우저 저장 정보를 지울 때까지 유지됩니다. 언제든 아래 버튼에서 설정을 바꿀 수 있습니다.</p>
       <p class="analytics-choice" data-analytics-choice>현재 설정을 확인하고 있습니다.</p>
       <p><button class="settings-button" type="button" data-analytics-settings>방문 분석 설정 열기</button></p>
       <h2>문의</h2>
@@ -1136,10 +1136,10 @@ SITE_JS = r"""
   "use strict";
 
   const consentKey = "golgong-analytics-consent";
-  const containerNode = document.querySelector('meta[name="google-tag-manager-id"]');
-  const containerId = containerNode ? containerNode.content.trim() : "";
-  const validContainerId = /^GTM-[A-Z0-9]{6,20}$/.test(containerId);
-  let tagManagerLoaded = false;
+  const measurementNode = document.querySelector('meta[name="google-analytics-id"]');
+  const measurementId = measurementNode ? measurementNode.content.trim() : "";
+  const validMeasurementId = /^G-[A-Z0-9]{6,20}$/.test(measurementId);
+  let analyticsLoaded = false;
 
   function readChoice() {
     try { return localStorage.getItem(consentKey); } catch (_) { return null; }
@@ -1152,25 +1152,33 @@ SITE_JS = r"""
   function updateChoiceText() {
     const node = document.querySelector("[data-analytics-choice]");
     if (!node) return;
-    if (!validContainerId) {
-      node.textContent = "방문 분석이 아직 시작되지 않았습니다.";
-      return;
-    }
     const choice = readChoice();
     node.textContent = choice === "granted"
       ? "현재 설정: 허용"
       : choice === "denied" ? "현재 설정: 거부" : "현재 설정: 선택 전";
   }
 
-  function loadTagManager() {
-    if (!validContainerId || tagManagerLoaded) return;
-    tagManagerLoaded = true;
+  function setAnalyticsDisabled(disabled) {
+    window[`ga-disable-${measurementId}`] = disabled;
+  }
+
+  function loadAnalytics() {
+    if (!validMeasurementId) return;
+    setAnalyticsDisabled(false);
     window.dataLayer = window.dataLayer || [];
-    window.dataLayer.push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
+    window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+    window.gtag("consent", "update", { analytics_storage: "granted" });
+    if (analyticsLoaded) return;
+    analyticsLoaded = true;
+    window.gtag("js", new Date());
+    window.gtag("config", measurementId, {
+      allow_google_signals: false,
+      allow_ad_personalization_signals: false
+    });
     const script = document.createElement("script");
     script.async = true;
-    script.id = "google-tag-manager";
-    script.src = `https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(containerId)}`;
+    script.id = "google-analytics-tag";
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
     document.head.appendChild(script);
   }
 
@@ -1191,30 +1199,27 @@ SITE_JS = r"""
   function chooseAnalytics(value) {
     saveChoice(value);
     if (value === "granted") {
-      loadTagManager();
-      updateChoiceText();
-      closeConsentPanel();
-      return;
+      loadAnalytics();
+    } else {
+      setAnalyticsDisabled(true);
+      if (typeof window.gtag === "function") {
+        window.gtag("consent", "update", { analytics_storage: "denied" });
+      }
+      clearAnalyticsCookies();
     }
-    const mustReload = tagManagerLoaded;
-    if (typeof window.gtag === "function") {
-      window.gtag("consent", "update", { analytics_storage: "denied" });
-    }
-    clearAnalyticsCookies();
     updateChoiceText();
     closeConsentPanel();
-    if (mustReload) location.reload();
   }
 
   function showConsentPanel(shouldFocus = false) {
-    if (!validContainerId) return;
+    if (!validMeasurementId) return;
     closeConsentPanel();
     const panel = document.createElement("section");
     panel.className = "consent-panel";
     panel.setAttribute("aria-label", "방문 분석 설정");
 
     const message = document.createElement("p");
-    message.textContent = "이 사이트는 Google Tag Manager를 통해 Google Analytics를 사용합니다. 허용하기 전에는 분석 정보를 보내지 않습니다.";
+    message.textContent = "이 사이트는 Google Analytics를 사용합니다. 허용하기 전에는 분석 정보를 보내지 않습니다.";
     panel.appendChild(message);
 
     const actions = document.createElement("div");
@@ -1238,13 +1243,11 @@ SITE_JS = r"""
 
   function initAnalytics() {
     document.querySelectorAll("[data-analytics-settings]").forEach((button) => {
-      if (!validContainerId) button.hidden = true;
       button.addEventListener("click", () => showConsentPanel(true));
     });
     updateChoiceText();
-    if (!validContainerId) return;
     const choice = readChoice();
-    if (choice === "granted") loadTagManager();
+    if (choice === "granted") loadAnalytics();
     if (choice !== "granted" && choice !== "denied") showConsentPanel(false);
   }
 
