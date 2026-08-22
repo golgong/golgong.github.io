@@ -183,10 +183,20 @@ def main() -> None:
     expected_paths = {p["path"] for p in posts}
     if len(home_links) != len(posts) or home_paths != expected_paths:
         fail(f"home links differ: {home_paths ^ expected_paths}")
-    if home.select_one(".home-intro h1").get_text(" ", strip=True) != "질문. 자료. 확인.":
-        fail("home declaration mismatch")
+    home_h1 = home.select_one("main#main-content > h1.visually-hidden")
+    if home_h1 is None or home_h1.get_text(" ", strip=True) != SITE_NAME:
+        fail("home semantic heading mismatch")
+    if "질문. 자료. 확인." in home.get_text(" ", strip=True):
+        fail("obsolete home decoration remains")
     if home.select_one(".home-manifesto .home-hero") is None:
         fail("home manifesto layout missing")
+    manifesto_text = home.select_one(".home-manifesto__copy").get_text(" ", strip=True)
+    for sentence in (
+        "우리가 당연하다고 여긴 것이 데이터에서도 맞는지 확인합니다.",
+        "공공데이터와 공개 API를 직접 분석하고, 결과가 나온 과정과 한계까지 함께 공개합니다.",
+    ):
+        if sentence not in manifesto_text:
+            fail("home manifesto copy mismatch")
     journal_rows = home.select(".journal-row")
     if (
         len(journal_rows) != len(posts)
@@ -253,7 +263,7 @@ def main() -> None:
 
     table_total = 0
     expected_canonicals = {SITE + "/", SITE + "/about/"}
-    for post in posts:
+    for post_index, post in enumerate(posts):
         page_path = ROOT / post["path"].lstrip("/") / "index.html"
         soup = BeautifulSoup(page_path.read_text(encoding="utf-8"), "html.parser")
         canonical = SITE + post["path"]
@@ -284,6 +294,13 @@ def main() -> None:
         hero_image = soup.select_one(".hero img")
         if hero_image is None or hero_image.get("src") != post["featured_image"]:
             fail(f"article hero image mismatch: {post['slug']}")
+        post_nav = soup.select_one(".post-nav")
+        nav_links = post_nav.select("a") if post_nav else []
+        expected_nav_links = 1 if post_index in {0, len(posts) - 1} else 2
+        if len(nav_links) != expected_nav_links:
+            fail(f"post navigation count mismatch: {post['slug']}")
+        if (expected_nav_links == 1) != ("post-nav--single" in post_nav.get("class", [])):
+            fail(f"post navigation single-link layout mismatch: {post['slug']}")
         article_body = soup.select_one(".article-body")
         source_body = BeautifulSoup(post["body_html"], "html.parser")
         if text_hash(source_body) != post["text_sha256"]:

@@ -247,6 +247,7 @@ def render_article(post: dict, posts: list[dict]) -> str:
         f'<a href="{esc(other["path"])}"><span>{label}</span><strong>{esc(other["title"])}</strong></a>'
         for label, other in neighbors
     )
+    neighbor_class = "post-nav post-nav--single" if len(neighbors) == 1 else "post-nav"
     hero = ""
     if post.get("featured_image"):
         hero = (
@@ -277,7 +278,7 @@ def render_article(post: dict, posts: list[dict]) -> str:
   </article>
   <section class="post-nav-wrap" aria-labelledby="continue-heading">
     <h2 id="continue-heading" class="eyebrow">이어서 읽기</h2>
-    <nav class="post-nav" aria-label="다른 글">{neighbor_html}</nav>
+    <nav class="{neighbor_class}" aria-label="다른 글">{neighbor_html}</nav>
   </section>
 </main>
 {site_footer()}
@@ -333,17 +334,13 @@ def render_index(posts: list[dict]) -> str:
 <body>
 {site_header("home")}
 <main id="main-content" class="home-shell" tabindex="-1">
-  <section class="home-intro">
-    <p class="eyebrow">Independent data journal · {len(posts)} records</p>
-    <h1>질문. 자료. 확인.</h1>
-  </section>
+  <h1 class="visually-hidden">{SITE_NAME}</h1>
 
   <section class="home-manifesto" aria-label="골때리는공작소 소개">
     <figure class="home-hero"><img src="{HOME_HERO}" alt="{SITE_NAME} — 아무도 세어 보지 않은 것을 끝까지 확인합니다" width="1448" height="1086" fetchpriority="high" decoding="async"></figure>
     <div class="home-manifesto__copy">
-      <p>공공데이터와 공개 API에서 자료를 모아 직접 세어 봅니다.</p>
-      <p>짐작하지 않고 수집 기준과 한계를 함께 확인합니다.</p>
-      <p>확인된 숫자와 근거만 남깁니다.</p>
+      <p>우리가 당연하다고 여긴 것이 데이터에서도 맞는지 확인합니다.</p>
+      <p>공공데이터와 공개 API를 직접 분석하고, 결과가 나온 과정과 한계까지 함께 공개합니다.</p>
       <a class="outline-link" href="#records">전체 기록 보기</a>
     </div>
   </section>
@@ -828,6 +825,7 @@ time, table { font-variant-numeric: tabular-nums; }
 .post-nav-wrap { max-width: var(--content); margin: 82px auto 0; padding-top: 28px; border-top: 1px solid var(--ink); }
 .post-nav-wrap > .eyebrow { margin-bottom: 18px; }
 .post-nav { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--line); }
+.post-nav--single { grid-template-columns: 1fr; background: transparent; }
 .post-nav a { min-width: 0; padding: 22px; background: var(--surface); color: var(--ink); text-decoration: none; }
 .post-nav a:hover { background: #f0ece3; }
 .post-nav span { display: block; margin-bottom: 7px; color: var(--muted); font-size: 11px; letter-spacing: .08em; }
