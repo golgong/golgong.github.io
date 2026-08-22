@@ -759,7 +759,7 @@ time, table { font-variant-numeric: tabular-nums; }
   text-align: center;
 }
 .service-panel .eyebrow { color: var(--muted); }
-.service-panel h2 { max-width: 720px; margin: 0 auto; font-size: clamp(34px, 4vw, 46px); letter-spacing: -.02em; line-height: 1.22; }
+.service-panel h2 { margin: 0 auto; font-size: clamp(34px, 4vw, 46px); letter-spacing: -.02em; line-height: 1.22; white-space: nowrap; }
 .service-panel > p:not(.eyebrow) { max-width: 610px; margin: 22px auto 0; color: var(--muted); font-size: 16px; line-height: 1.5; }
 .service-panel .text-link { display: inline-block; margin-top: 26px; padding: 8px 16px; border: 1px solid var(--line); color: var(--ink); }
 .service-panel .text-link:hover { background: var(--night); color: #fff; }
@@ -883,6 +883,7 @@ time, table { font-variant-numeric: tabular-nums; }
   .section-heading { padding: 7px 0 22px; }
   .section-heading h2 { font-size: 36px; }
   .service-panel { margin-top: 24px; padding: 34px 2px 38px; }
+  .service-panel h2 { white-space: normal; }
   .service-panel > p:not(.eyebrow) { font-size: 15px; }
   .article-shell { padding: 58px 0 82px; }
   .article-header { margin-bottom: 38px; }
