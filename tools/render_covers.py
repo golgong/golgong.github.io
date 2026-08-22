@@ -53,11 +53,10 @@ def cover_html(
     *,
     source: Path,
     lines: list[str],
-    number: str,
+    label: str,
     width: int,
     height: int,
     wide: bool,
-    home: bool = False,
 ) -> str:
     safe_x = 58 if wide else 72
     safe_top = 48 if wide else 62
@@ -68,7 +67,6 @@ def cover_html(
     main_size = title_size(lines, wide)
     title_width = 82 if wide else 78
     line_markup = "".join(f"<span>{html.escape(line)}</span>" for line in lines)
-    label = "INDEPENDENT DATA JOURNAL" if home else f"DATA RECORD · {number}"
     return f"""<!doctype html>
 <html lang="ko">
 <head>
@@ -102,13 +100,13 @@ html, body {{ margin: 0; width: {width}px; height: {height}px; overflow: hidden;
     <img class="art" src="{source.as_uri()}" alt="">
     <header class="mast"><div class="brand">{BRAND}</div><div class="url">{SITE}</div></header>
     <div class="rule"></div>
-    <section class="copy"><p class="label">{label}</p><h1 class="title">{line_markup}</h1></section>
+    <section class="copy"><p class="label">{html.escape(label)}</p><h1 class="title">{line_markup}</h1></section>
   </main>
 </body>
 </html>"""
 
 
-def render(page, *, source: Path, lines: list[str], number: str, output: Path, width: int, height: int, home: bool = False) -> None:
+def render(page, *, source: Path, lines: list[str], label: str, output: Path, width: int, height: int) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile("w", suffix=".html", encoding="utf-8", delete=False) as temp:
         temp_path = Path(temp.name)
@@ -116,11 +114,10 @@ def render(page, *, source: Path, lines: list[str], number: str, output: Path, w
             cover_html(
                 source=source,
                 lines=lines,
-                number=number,
+                label=label,
                 width=width,
                 height=height,
                 wide=width / height > 1.5,
-                home=home,
             )
         )
     try:
@@ -149,15 +146,15 @@ def main() -> None:
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(channel="msedge", headless=True)
         page = browser.new_page(device_scale_factor=1)
-        for index, post in enumerate(posts, start=1):
+        for post in posts:
             source = SOURCE_DIR / f"{post['slug']}.webp"
             if not source.is_file():
                 raise SystemExit(f"missing source image: {source}")
             target_dir = ROOT / "assets" / "images" / post["slug"]
             featured = target_dir / "featured-v2.jpg"
             og = target_dir / "og-v2.jpg"
-            render(page, source=source, lines=TITLE_LINES[post["slug"]], number=f"{index:02d}", output=featured, width=1448, height=1086)
-            render(page, source=source, lines=TITLE_LINES[post["slug"]], number=f"{index:02d}", output=og, width=1200, height=630)
+            render(page, source=source, lines=TITLE_LINES[post["slug"]], label="DATA RECORD", output=featured, width=1448, height=1086)
+            render(page, source=source, lines=TITLE_LINES[post["slug"]], label="DATA RECORD", output=og, width=1200, height=630)
             outputs.extend((featured, og))
 
         home_source = SOURCE_DIR / "home.png"
@@ -165,14 +162,28 @@ def main() -> None:
         home_featured = home_dir / "hero-v2.jpg"
         home_og = home_dir / "og-v2.jpg"
         home_lines = ["아무도 세어 보지 않은 것을", "끝까지 확인합니다"]
-        render(page, source=home_source, lines=home_lines, number="", output=home_featured, width=1448, height=1086, home=True)
-        render(page, source=home_source, lines=home_lines, number="", output=home_og, width=1200, height=630, home=True)
+        render(page, source=home_source, lines=home_lines, label="INDEPENDENT DATA JOURNAL", output=home_featured, width=1448, height=1086)
+        render(page, source=home_source, lines=home_lines, label="INDEPENDENT DATA JOURNAL", output=home_og, width=1200, height=630)
         outputs.extend((home_featured, home_og))
         browser.close()
 
+    rendered_hashes = {
+        "/" + path.relative_to(ROOT).as_posix(): file_sha256(path)
+        for path in outputs
+    }
+    updated_paths: set[str] = set()
+    for image in data["images"]:
+        if image["path"] in rendered_hashes:
+            image["sha256"] = rendered_hashes[image["path"]]
+            updated_paths.add(image["path"])
+    if updated_paths != set(rendered_hashes):
+        missing_paths = sorted(set(rendered_hashes) - updated_paths)
+        raise SystemExit(f"rendered images missing from blog manifest: {missing_paths}")
+    DATA_PATH.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
     for path in outputs:
         rel = "/" + path.relative_to(ROOT).as_posix()
-        print(f"{rel}\t{path.stat().st_size}\t{file_sha256(path)}")
+        print(f"{rel}\t{path.stat().st_size}\t{rendered_hashes[rel]}")
     print(f"RENDERED={len(outputs)}")
 
 

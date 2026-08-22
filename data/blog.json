@@ -269,142 +269,142 @@
     {
       "source": "render:editorial-cover:one-person-households-top-districts:2026-08-22",
       "path": "/assets/images/one-person-households-top-districts/featured-v2.jpg",
-      "sha256": "d1f616052f4a56a6246dd2b1480d07864cdb7db742b80a9affb571f09f119359"
+      "sha256": "f9b1dae34ab3056001a73cef0be89d780ae8ea8e7a38fc3c656f0c1c33bae7c1"
     },
     {
       "source": "render:editorial-og:one-person-households-top-districts:2026-08-22",
       "path": "/assets/images/one-person-households-top-districts/og-v2.jpg",
-      "sha256": "22d8d1181a2d42fd1965808fbb50137be48923865b51750509e67937f435e4c2"
+      "sha256": "73b06b5496ccfc685ccef9e1d2ef54714f55ee6582f9a45f17a9c450cd4ad41f"
     },
     {
       "source": "render:editorial-cover:ad-depth-ctr:2026-08-22",
       "path": "/assets/images/ad-depth-ctr/featured-v2.jpg",
-      "sha256": "8197f118732a90193553f6975bb0270b3bc5ba446eb90e596fee218ec069dac9"
+      "sha256": "ac7ee425b7e8ae40d968bb722543ab6a8edbee6d17f003286fec6f3ac6f3b513"
     },
     {
       "source": "render:editorial-og:ad-depth-ctr:2026-08-22",
       "path": "/assets/images/ad-depth-ctr/og-v2.jpg",
-      "sha256": "8a0dc08323eaef998a45a676a4b9c59a8c3588b005ff35197f04027d5603b5e8"
+      "sha256": "eedc29f0f7528eceea769f7aca8df997e26746f825ad2ad5f99235ec5e9dadc3"
     },
     {
       "source": "render:editorial-cover:clinic-open-by-specialty:2026-08-22",
       "path": "/assets/images/clinic-open-by-specialty/featured-v2.jpg",
-      "sha256": "cbcd63b8a8e0298b0a7dfc56746f283636ec201c2305c7d463819662e7d60ef4"
+      "sha256": "1e866d2ced63937d137edc4ba0dcba029f6c3d9674a5c16b31b0dd50de5d353a"
     },
     {
       "source": "render:editorial-og:clinic-open-by-specialty:2026-08-22",
       "path": "/assets/images/clinic-open-by-specialty/og-v2.jpg",
-      "sha256": "730782dc4eca99265174284a7b8e111d2995907d598300e59d995f43a3244145"
+      "sha256": "ccafa5e878de36409429ca60d01013c3215628e0b00fb1a2b5ee1109159c6df4"
     },
     {
       "source": "render:editorial-cover:clinic-location-by-specialty:2026-08-22",
       "path": "/assets/images/clinic-location-by-specialty/featured-v2.jpg",
-      "sha256": "dac94722e8d7ac70c01569133725fb74c8561c03dd52f2a3e8d2a30cbc721c7d"
+      "sha256": "9bc9e367b67f30d48fb224849b1039a142b319fddb0140c3f4c98cd240c95c65"
     },
     {
       "source": "render:editorial-og:clinic-location-by-specialty:2026-08-22",
       "path": "/assets/images/clinic-location-by-specialty/og-v2.jpg",
-      "sha256": "1a65d37ad8cde40afcddce3b3111922b996e56a74a7b69989f14b6cd0026be65"
+      "sha256": "239e15ac801e9a4bf487a1f5be3d5ca04cb46435cfa66f43b42a3abccd30e61c"
     },
     {
       "source": "render:editorial-cover:internal-medicine-review-count:2026-08-22",
       "path": "/assets/images/internal-medicine-review-count/featured-v2.jpg",
-      "sha256": "13d05e6a3dbb99a67531ef14d9df7c71bc088288ad9bbca351ee528bb7da0c7c"
+      "sha256": "1e8a898d545871d68ae094b0fb4f1e4b087b44ae7fa6a2ecac39e5f820d0998b"
     },
     {
       "source": "render:editorial-og:internal-medicine-review-count:2026-08-22",
       "path": "/assets/images/internal-medicine-review-count/og-v2.jpg",
-      "sha256": "713598caf94857c51296e39462e4a18094d974c640569aa8d7a8cbfab313e165"
+      "sha256": "c2d321d95a122eea2a7f5a2aa792f9fec62ccfb45d31e8c708bbe0468be35a1b"
     },
     {
       "source": "render:editorial-cover:hospital-keyword-ad-cost:2026-08-22",
       "path": "/assets/images/hospital-keyword-ad-cost/featured-v2.jpg",
-      "sha256": "06e400e11170543ff0a82836dbdd191c3a632db5406e065fbf24dc2175e200cb"
+      "sha256": "2dfc369a3bb73c453bee9847f47222327be8af0dbec5ebd6204b6509a7c71ece"
     },
     {
       "source": "render:editorial-og:hospital-keyword-ad-cost:2026-08-22",
       "path": "/assets/images/hospital-keyword-ad-cost/og-v2.jpg",
-      "sha256": "9e57959564587a761360c8f0aa762a383e0e82a8f0b0bedbf9822f31e9ed44e8"
+      "sha256": "afd57521452a5a1959900cb9972652b725de5c1823d3bd7eeb77b2df4a477b08"
     },
     {
       "source": "render:editorial-cover:orthopedics-review-count:2026-08-22",
       "path": "/assets/images/orthopedics-review-count/featured-v2.jpg",
-      "sha256": "a6d0075a5f1de17344d1fe48df50608a517d2ee096c031e42edf286b44ed2213"
+      "sha256": "de857b286b754eee6e5aad3f7cfb67e658db585ed5e7d8236aeff744bff7e952"
     },
     {
       "source": "render:editorial-og:orthopedics-review-count:2026-08-22",
       "path": "/assets/images/orthopedics-review-count/og-v2.jpg",
-      "sha256": "b33ec3477c8cf9a4c6d143f7618c466ddb80dcbb8ee680b63767934a1ea7df59"
+      "sha256": "4d61a008cd67be2d4de9fa6dbd5631171a3a64b3c0b4a07f62dc33fb922bf604"
     },
     {
       "source": "render:editorial-cover:dermatology-review-count:2026-08-22",
       "path": "/assets/images/dermatology-review-count/featured-v2.jpg",
-      "sha256": "49078a9ffa4dda3b2a2cd2f81ab8e08c124d7a8fae45eaa30fc58c5aaea37b88"
+      "sha256": "c88ed83bb23c300a862f7a82f53814d3dcfa85b0da524a4abf1d1fff3843d0d7"
     },
     {
       "source": "render:editorial-og:dermatology-review-count:2026-08-22",
       "path": "/assets/images/dermatology-review-count/og-v2.jpg",
-      "sha256": "0835ec769506f3950d72344da2ccbb537d612c45d39fc411cac19263685027a9"
+      "sha256": "e2fb0772182a6e5c42f42e3bb3169a00f22dfa56290f41ae02432e340aeea38c"
     },
     {
       "source": "render:editorial-cover:dental-clinic-review-count:2026-08-22",
       "path": "/assets/images/dental-clinic-review-count/featured-v2.jpg",
-      "sha256": "872098537caf379113231d15c2c8c0116ced87e896fd718be77d3cc40583568a"
+      "sha256": "de3937b3539f4dc3993a4b76c8b5bf001ec0c3ad38c5d7e3d4a163687148720c"
     },
     {
       "source": "render:editorial-og:dental-clinic-review-count:2026-08-22",
       "path": "/assets/images/dental-clinic-review-count/og-v2.jpg",
-      "sha256": "65e9c4b4d269eaa0ef307c70b069d5c447d08d0aa1a4a5fbd8e49d27d54063d4"
+      "sha256": "6da504bbfee5dd5e365e1bf055ec261d8b80fe1609a40b23dd2ed741184dfe9e"
     },
     {
       "source": "render:editorial-cover:cosmetic-medical-keyword-ad-cost:2026-08-22",
       "path": "/assets/images/cosmetic-medical-keyword-ad-cost/featured-v2.jpg",
-      "sha256": "15daa87eeb3abb493e28767966fcaaa0ff2ed6c193b7063d790859101c635aff"
+      "sha256": "8c38c1bd3c8f63046664668f6dd5fcf775a00bca01b45ae523ca259db187305b"
     },
     {
       "source": "render:editorial-og:cosmetic-medical-keyword-ad-cost:2026-08-22",
       "path": "/assets/images/cosmetic-medical-keyword-ad-cost/og-v2.jpg",
-      "sha256": "1fa6b832c816a6c51d8d62e46db76058f300af32d8f348db5997805cba081266"
+      "sha256": "bdcac5b28ed7a37706a55759f547a5276f337c5e500444185dc839d93a99136a"
     },
     {
       "source": "render:editorial-cover:manual-therapy-price-gap:2026-08-22",
       "path": "/assets/images/manual-therapy-price-gap/featured-v2.jpg",
-      "sha256": "6499ca512f874674d2a988c648a2b8dc6cac424b0e10d9b4bcec12b8bd6fe911"
+      "sha256": "30051cdd4e58edf9eb181ee2f37d90bfe55fec9e34f913852eb5602b6cb7b94c"
     },
     {
       "source": "render:editorial-og:manual-therapy-price-gap:2026-08-22",
       "path": "/assets/images/manual-therapy-price-gap/og-v2.jpg",
-      "sha256": "735b01a0704ace0095dd3c1cea8d96736f11fa1d84b6b28a6bb9c3dffc359a83"
+      "sha256": "677762711427bcaa3bed81b12dcf29576e3a1db4e0cd16a06fa6bb188ba3c096"
     },
     {
       "source": "render:editorial-cover:what-119-actually-does:2026-08-22",
       "path": "/assets/images/what-119-actually-does/featured-v2.jpg",
-      "sha256": "12b817499bb5be172fab6bcc7f47ddb26bc35549066b5f88676876932f2f61d1"
+      "sha256": "5ad6c35bf11cba4a1fa6e778ccf557973d241edc1a1cf79331c3e619c9856761"
     },
     {
       "source": "render:editorial-og:what-119-actually-does:2026-08-22",
       "path": "/assets/images/what-119-actually-does/og-v2.jpg",
-      "sha256": "103cfc0d3917c3a3284cadb48b219d23c44977a1f53c551091c7be2a8c71c350"
+      "sha256": "726c561a63db5f8c3cf0d90110e3c1afe5de10863d281a25279fd6b63352b16f"
     },
     {
       "source": "render:editorial-cover:most-used-medicines-korea:2026-08-22",
       "path": "/assets/images/most-used-medicines-korea/featured-v2.jpg",
-      "sha256": "e75ecd5a92e610e917cabdcf8fccf634ac159c62895fa010187dba2585e365cb"
+      "sha256": "dced7a559c5f65160749e24cd0ddb0cb5b3173659d180ff76088877180d8a506"
     },
     {
       "source": "render:editorial-og:most-used-medicines-korea:2026-08-22",
       "path": "/assets/images/most-used-medicines-korea/og-v2.jpg",
-      "sha256": "4316425c4ceb36fcf58604d54ddb6bb2e9ea9997e848a8f867e83e2a6bf9585b"
+      "sha256": "c6eae9480270ca59cfc3611a4f04f5b46bcb858a0f256c48d0d97b2e010c3483"
     },
     {
       "source": "render:editorial-cover:baby-names-seoul:2026-08-22",
       "path": "/assets/images/baby-names-seoul/featured-v2.jpg",
-      "sha256": "e0571741fb150c39baf9669568e670b97b9987526781817f489978020842dd96"
+      "sha256": "2b2408d68d6f8e0a8487b1cb0cb6ea90e1a7c42e0b80ec94ce3d515d17c16769"
     },
     {
       "source": "render:editorial-og:baby-names-seoul:2026-08-22",
       "path": "/assets/images/baby-names-seoul/og-v2.jpg",
-      "sha256": "176b7d4dcf793f1e4046e1d57a29a389ccf63297c81f419e5b758cec37f1323d"
+      "sha256": "3659401988075f98603ab822f5f31babb742ac63ffc4158166ae3270801cc749"
     },
     {
       "source": "render:home-cover:2026-08-22",
