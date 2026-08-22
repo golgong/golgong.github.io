@@ -15,6 +15,10 @@ from update_visitor_stats import validate_summary
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE = "https://golgong.github.io"
+SITE_NAME = "골때리는공작소"
+HOME_HERO = "/assets/images/home/hero-v2.jpg"
+HOME_OG = "/assets/images/home/og-v2.jpg"
+HOME_OG_ALT = f"{SITE_NAME} — 아무도 세어 보지 않은 것을 끝까지 확인합니다"
 NEW_EMAIL = "golgong@kakao.com"
 GA_MEASUREMENT_ID_PATTERN = re.compile(r"G-[A-Z0-9]{6,20}")
 SERVICE_HEADLINE = "필요한 자료를 대신 분석해 드립니다."
@@ -58,6 +62,28 @@ def local_file(url: str) -> Path | None:
     if path.endswith("/"):
         candidate /= "index.html"
     return candidate
+
+
+def validate_social_image(page: BeautifulSoup, expected_url: str, expected_alt: str) -> None:
+    expected_properties = {
+        "og:image": expected_url,
+        "og:image:width": "1200",
+        "og:image:height": "630",
+        "og:image:type": "image/jpeg",
+        "og:image:alt": expected_alt,
+    }
+    for property_name, expected in expected_properties.items():
+        node = page.find("meta", attrs={"property": property_name})
+        if node is None or node.get("content") != expected:
+            fail(f"social image metadata mismatch: {property_name}")
+    expected_names = {
+        "twitter:image": expected_url,
+        "twitter:image:alt": expected_alt,
+    }
+    for name, expected in expected_names.items():
+        node = page.find("meta", attrs={"name": name})
+        if node is None or node.get("content") != expected:
+            fail(f"social image metadata mismatch: {name}")
 
 
 def main() -> None:
@@ -124,6 +150,19 @@ def main() -> None:
             fail(f"local Open Graph image missing: {name}")
         if not local_file(og_image["content"]).is_file():
             fail(f"Open Graph image file missing: {name}")
+    validate_social_image(home, SITE + HOME_OG, HOME_OG_ALT)
+    home_hero = home.select_one(".home-hero img")
+    if (
+        home_hero is None
+        or home_hero.get("src") != HOME_HERO
+        or home_hero.get("width") != "1448"
+        or home_hero.get("height") != "1086"
+    ):
+        fail("home hero image mismatch")
+    home_schema_node = home.find("script", attrs={"type": "application/ld+json"})
+    home_schema = json.loads(home_schema_node.string)
+    if home_schema.get("@type") != "WebSite" or home_schema.get("image") != SITE + HOME_OG:
+        fail("home WebSite schema image mismatch")
     if home.find("link", rel="canonical").get("href") != SITE + "/":
         fail("home canonical mismatch")
     if about_page.find("link", rel="canonical").get("href") != SITE + "/about/":
@@ -150,6 +189,9 @@ def main() -> None:
     expected_home_images = {post["featured_image"] for post in posts}
     if len(home_images) != 14 or {image.get("src") for image in home_images} != expected_home_images:
         fail("home editorial image set mismatch")
+    featured_home_image = home.select_one(".featured-story__image img")
+    if featured_home_image is None or featured_home_image.get("loading") != "lazy":
+        fail("latest post image must load lazily below the home hero")
     visitor_strip = home.select_one("[data-visitor-stats]")
     if visitor_strip is None or visitor_strip.select_one("[data-visitor-summary]") is None:
         fail("home visitor statistics strip missing")
@@ -206,9 +248,7 @@ def main() -> None:
         canonical_tag = soup.find("link", rel="canonical")
         og_url = soup.find("meta", attrs={"property": "og:url"})
         og_type = soup.find("meta", attrs={"property": "og:type"})
-        og_image = soup.find("meta", attrs={"property": "og:image"})
-        if not og_image or og_image.get("content") != SITE + post["featured_image"]:
-            fail(f"Open Graph image mismatch: {post['slug']}")
+        validate_social_image(soup, SITE + post["og_image"], post["title"])
         if not canonical_tag or canonical_tag.get("href") != canonical:
             fail(f"canonical mismatch: {post['slug']}")
         if not og_url or og_url.get("content") != canonical or not og_type or og_type.get("content") != "article":
@@ -217,11 +257,16 @@ def main() -> None:
         schema = json.loads(schema_node.string)
         if schema.get("@type") != "BlogPosting" or schema.get("url") != canonical:
             fail(f"schema mismatch: {post['slug']}")
+        if schema.get("image") != [SITE + post["og_image"]]:
+            fail(f"schema image mismatch: {post['slug']}")
         if schema.get("datePublished") != post["date"] or schema.get("dateModified") != post["modified"]:
             fail(f"schema date mismatch: {post['slug']}")
         description = soup.find("meta", attrs={"name": "description"}).get("content")
         if description != post["description"] or not 50 <= len(description) <= 170:
             fail(f"description mismatch: {post['slug']}")
+        hero_image = soup.select_one(".hero img")
+        if hero_image is None or hero_image.get("src") != post["featured_image"]:
+            fail(f"article hero image mismatch: {post['slug']}")
         article_body = soup.select_one(".article-body")
         source_body = BeautifulSoup(post["body_html"], "html.parser")
         if text_hash(source_body) != post["text_sha256"]:
@@ -269,8 +314,8 @@ def main() -> None:
             if candidate is not None and not candidate.is_file():
                 fail(f"broken internal link in {path}: {url}")
 
-    if len(data["images"]) != 19:
-        fail(f"expected 19 image records, got {len(data['images'])}")
+    if len(data["images"]) != 35:
+        fail(f"expected 35 image records, got {len(data['images'])}")
     expected_images = {(ROOT / image["path"].lstrip("/")).resolve() for image in data["images"]}
     actual_images = {path.resolve() for path in (ROOT / "assets" / "images").rglob("*") if path.is_file()}
     if actual_images != expected_images:
@@ -284,6 +329,9 @@ def main() -> None:
         elif path.suffix.lower() == ".webp":
             if not (raw.startswith(b"RIFF") and raw[8:12] == b"WEBP"):
                 fail(f"not WebP: {path}")
+        elif path.suffix.lower() in {".jpg", ".jpeg"}:
+            if not raw.startswith(b"\xff\xd8\xff"):
+                fail(f"not JPEG: {path}")
         else:
             fail(f"unsupported image type: {path}")
         if hashlib.sha256(raw).hexdigest() != image["sha256"]:
@@ -363,7 +411,7 @@ def main() -> None:
         if hashlib.sha256(path.read_bytes()).hexdigest() != expected_hash:
             fail(f"generated file changed after build: {relative}")
 
-    print("VALIDATED posts=14 tables=73 images=19 sitemap=16 feed=14 links=ok seo=ok")
+    print("VALIDATED posts=14 tables=73 images=35 sitemap=16 feed=14 links=ok seo=ok")
 
 
 if __name__ == "__main__":

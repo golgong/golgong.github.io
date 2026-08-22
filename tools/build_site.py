@@ -16,6 +16,8 @@ DATA_FILE = ROOT / "data" / "blog.json"
 ANALYTICS_CONFIG_FILE = ROOT / "data" / "analytics.json"
 SITE_URL = "https://golgong.github.io"
 SITE_NAME = "골때리는공작소"
+HOME_HERO = "/assets/images/home/hero-v2.jpg"
+HOME_OG = "/assets/images/home/og-v2.jpg"
 CONTACT = "golgong@kakao.com"
 SERVICE_HEADLINE = "필요한 자료를 대신 분석해 드립니다."
 OLD_ARTICLE_SERVICE_HEADLINE = "골때리는공작소는 이런 일을 대신해 드립니다."
@@ -114,16 +116,27 @@ def write(path: Path, text: str) -> None:
 
 
 def page_head(*, title: str, description: str, canonical: str, og_type: str,
-              image: str | None = None, published: str | None = None,
+              image: str | None = None, image_alt: str | None = None,
+              image_width: int | None = None, image_height: int | None = None,
+              image_type: str | None = None, published: str | None = None,
               modified: str | None = None, schema: object | None = None,
               robots: str = "index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1") -> str:
     image_tags = ""
     if image:
+        resolved_image_alt = image_alt or title
         image_tags = (
             f'\n<meta property="og:image" content="{esc(image)}">'
+            f'\n<meta property="og:image:alt" content="{esc(resolved_image_alt)}">'
             f'\n<meta name="twitter:card" content="summary_large_image">'
             f'\n<meta name="twitter:image" content="{esc(image)}">'
+            f'\n<meta name="twitter:image:alt" content="{esc(resolved_image_alt)}">'
         )
+        if image_width is not None:
+            image_tags += f'\n<meta property="og:image:width" content="{image_width}">'
+        if image_height is not None:
+            image_tags += f'\n<meta property="og:image:height" content="{image_height}">'
+        if image_type:
+            image_tags += f'\n<meta property="og:image:type" content="{esc(image_type)}">'
     article_tags = ""
     if published:
         article_tags += f'\n<meta property="article:published_time" content="{esc(published)}">'
@@ -216,14 +229,14 @@ def article_schema(post: dict) -> dict:
         "publisher": {"@type": "Organization", "name": SITE_NAME, "url": SITE_URL + "/"},
         "url": canonical,
     }
-    if post.get("featured_image"):
-        schema["image"] = [SITE_URL + post["featured_image"]]
+    if post.get("og_image"):
+        schema["image"] = [SITE_URL + post["og_image"]]
     return schema
 
 
 def render_article(post: dict, posts: list[dict]) -> str:
     canonical = SITE_URL + post["path"]
-    image = SITE_URL + post["featured_image"] if post.get("featured_image") else None
+    image = SITE_URL + post["og_image"] if post.get("og_image") else None
     current = posts.index(post)
     neighbors = []
     if current > 0:
@@ -243,7 +256,9 @@ def render_article(post: dict, posts: list[dict]) -> str:
         )
     return f"""{page_head(
         title=post["title"], description=post["description"], canonical=canonical,
-        og_type="article", image=image, published=post["date"], modified=post["modified"],
+        og_type="article", image=image, image_alt=post["title"],
+        image_width=1200, image_height=630, image_type="image/jpeg",
+        published=post["date"], modified=post["modified"],
         schema=article_schema(post),
     )}
 <body>
@@ -273,7 +288,7 @@ def render_article(post: dict, posts: list[dict]) -> str:
 
 def render_index(posts: list[dict]) -> str:
     description = f"공공데이터와 공개 API에서 자료를 모아 직접 세어 본 결과를 공개합니다. {SERVICE_HEADLINE}"
-    latest_image = SITE_URL + posts[0]["featured_image"] if posts and posts[0].get("featured_image") else None
+    home_og = SITE_URL + HOME_OG
     schema = {
         "@context": "https://schema.org",
         "@type": "WebSite",
@@ -282,13 +297,14 @@ def render_index(posts: list[dict]) -> str:
         "description": description,
         "inLanguage": "ko-KR",
         "publisher": {"@type": "Organization", "name": SITE_NAME, "url": SITE_URL + "/about/"},
+        "image": home_og,
     }
     featured = posts[0]
     featured_thumb = ""
     if featured.get("featured_image"):
         featured_thumb = (
             f'<img src="{esc(featured["featured_image"])}" alt="" width="1448" height="1086" '
-            f'fetchpriority="high" decoding="async">'
+            f'loading="lazy" decoding="async">'
         )
 
     story_cards = []
@@ -312,7 +328,8 @@ def render_index(posts: list[dict]) -> str:
     return f"""{page_head(
         title=f"{SITE_NAME} — 공공데이터를 직접 세어 봅니다",
         description=description, canonical=SITE_URL + "/", og_type="website",
-        image=latest_image, schema=schema,
+        image=home_og, image_alt=f"{SITE_NAME} — 아무도 세어 보지 않은 것을 끝까지 확인합니다",
+        image_width=1200, image_height=630, image_type="image/jpeg", schema=schema,
     )}
 <body>
 {site_header("home")}
@@ -324,6 +341,8 @@ def render_index(posts: list[dict]) -> str:
     </div>
     <p>공공데이터와 공개 API에서 자료를 모아 직접 세어 보고, 확인된 결과만 씁니다.</p>
   </section>
+
+  <figure class="home-hero"><img src="{HOME_HERO}" alt="{SITE_NAME} — 아무도 세어 보지 않은 것을 끝까지 확인합니다" width="1448" height="1086" fetchpriority="high" decoding="async"></figure>
 
   <section class="featured-story" aria-labelledby="featured-heading">
     <a class="featured-story__image" href="{esc(featured["path"])}" tabindex="-1" aria-hidden="true">{featured_thumb}</a>
@@ -484,7 +503,7 @@ CSS = r"""
   --night: #1d201c;
   --content: 760px;
   --wide: 1280px;
-  --display: "Iowan Old Style", "Noto Serif KR", "Nanum Myeongjo", "Batang", Georgia, serif;
+  --system-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
 }
 * { box-sizing: border-box; }
 html { overflow-x: clip; color-scheme: light; scroll-behavior: smooth; }
@@ -492,7 +511,7 @@ body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
-  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+  font-family: var(--system-font);
   font-size: 16px;
   font-synthesis: none;
   line-height: 1.75;
@@ -605,7 +624,7 @@ time, table { font-variant-numeric: tabular-nums; }
 .service-panel h2,
 .article-body h2,
 .article-body h3 {
-  font-family: var(--display);
+  font-family: inherit;
   font-weight: 400;
 }
 .home-intro h1,
@@ -622,6 +641,17 @@ time, table { font-variant-numeric: tabular-nums; }
   color: var(--muted);
   font-size: 17px;
   line-height: 1.78;
+}
+.home-hero {
+  margin: 0 0 96px;
+  overflow: hidden;
+  background: var(--night);
+}
+.home-hero img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
 }
 .featured-story {
   display: grid;
@@ -722,8 +752,6 @@ time, table { font-variant-numeric: tabular-nums; }
 .story-card:nth-child(4n + 3) { grid-column: span 4; }
 .story-card:nth-child(4n) { grid-column: 6 / span 7; }
 .story-card__image { aspect-ratio: 4 / 3; }
-.story-card:nth-child(4n + 2) .story-card__image,
-.story-card:nth-child(4n + 3) .story-card__image { aspect-ratio: 4 / 5; }
 .story-card__body { padding-top: 22px; }
 .story-card__meta { display: flex; justify-content: space-between; gap: 16px; letter-spacing: .06em; text-transform: uppercase; }
 .story-card h3 { margin: 12px 0 14px; font-size: clamp(25px, 2.5vw, 38px); letter-spacing: -.04em; line-height: 1.2; }
@@ -822,7 +850,7 @@ time, table { font-variant-numeric: tabular-nums; }
 .post-nav a { min-width: 0; padding: 22px; background: var(--surface); color: var(--ink); text-decoration: none; }
 .post-nav a:hover { background: #f0ece3; }
 .post-nav span { display: block; margin-bottom: 7px; color: var(--muted); font-size: 11px; letter-spacing: .08em; }
-.post-nav strong { display: block; font-family: var(--display); font-size: 17px; font-weight: inherit; line-height: 1.45; }
+.post-nav strong { display: block; font-family: inherit; font-size: 17px; font-weight: inherit; line-height: 1.45; }
 .about-shell .article-header { margin-bottom: 62px; }
 .about-section-title { color: var(--accent); }
 .privacy-copy h2:first-child { margin-top: 0; }
@@ -844,6 +872,7 @@ time, table { font-variant-numeric: tabular-nums; }
 @media (max-width: 960px) {
   .home-intro { grid-template-columns: 1fr; gap: 28px; }
   .home-intro > p { max-width: 620px; }
+  .home-hero { margin-bottom: 72px; }
   .featured-story { grid-template-columns: 1fr; min-height: 0; }
   .featured-story__image { aspect-ratio: 4 / 3; }
   .featured-story__body { padding: 46px; }
@@ -862,6 +891,7 @@ time, table { font-variant-numeric: tabular-nums; }
   .home-intro { padding-bottom: 50px; }
   .home-intro h1 { font-size: clamp(40px, 11.5vw, 52px); }
   .home-intro > p { font-size: 16px; }
+  .home-hero { width: 100vw; margin-right: 50%; margin-bottom: 56px; margin-left: 50%; transform: translateX(-50%); }
   .featured-story__body { padding: 34px 24px 38px; }
   .featured-story h2 { font-size: clamp(34px, 10vw, 44px); }
   .visitor-strip { grid-template-columns: 1fr auto; gap: 5px 12px; }
@@ -874,7 +904,7 @@ time, table { font-variant-numeric: tabular-nums; }
   .section-heading h2 { font-size: 38px; }
   .story-grid { grid-template-columns: 1fr; gap: 64px; }
   .story-card, .story-card:nth-child(n) { grid-column: 1; }
-  .story-card__image, .story-card:nth-child(n) .story-card__image { aspect-ratio: 4 / 3; }
+  .story-card__image { aspect-ratio: 4 / 3; }
   .story-card h3, .story-card:nth-child(n) h3 { font-size: 29px; }
   .service-panel { margin-top: 94px; padding: 42px 24px; }
   .service-panel > p:not(.eyebrow) { font-size: 15px; }
