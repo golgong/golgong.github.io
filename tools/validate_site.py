@@ -144,15 +144,19 @@ def main() -> None:
     expected_paths = {p["path"] for p in posts}
     if len(home_links) != len(posts) or home_paths != expected_paths:
         fail(f"home links differ: {home_paths ^ expected_paths}")
-    if len(home.select(".featured-story")) != 1 or len(home.select(".story-card")) != 3 or len(home.select(".archive-row")) != 10:
+    if len(home.select(".featured-story")) != 1 or len(home.select(".story-card")) != 13:
         fail("home editorial layout mismatch")
+    home_images = home.select(".featured-story__image img, .story-card__image img")
+    expected_home_images = {post["featured_image"] for post in posts}
+    if len(home_images) != 14 or {image.get("src") for image in home_images} != expected_home_images:
+        fail("home editorial image set mismatch")
     visitor_strip = home.select_one("[data-visitor-stats]")
     if visitor_strip is None or visitor_strip.select_one("[data-visitor-summary]") is None:
         fail("home visitor statistics strip missing")
     if home.select_one("#service-heading").get_text(" ", strip=True) != SERVICE_HEADLINE:
         fail("home service headline mismatch")
-    visible_summaries = home.select(".featured-story__body > p:not(.eyebrow), .story-card p")
-    if len(visible_summaries) != 4 or any(
+    visible_summaries = home.select(".featured-story__body > p:not(.eyebrow), .story-card__body > p")
+    if len(visible_summaries) != 14 or any(
         not re.search(r"[.!?]$", summary.get_text(" ", strip=True)) for summary in visible_summaries
     ):
         fail("home contains an incomplete visible summary")
@@ -274,8 +278,14 @@ def main() -> None:
     for image in data["images"]:
         path = ROOT / image["path"].lstrip("/")
         raw = path.read_bytes()
-        if not raw.startswith(b"\x89PNG\r\n\x1a\n"):
-            fail(f"not PNG: {path}")
+        if path.suffix.lower() == ".png":
+            if not raw.startswith(b"\x89PNG\r\n\x1a\n"):
+                fail(f"not PNG: {path}")
+        elif path.suffix.lower() == ".webp":
+            if not (raw.startswith(b"RIFF") and raw[8:12] == b"WEBP"):
+                fail(f"not WebP: {path}")
+        else:
+            fail(f"unsupported image type: {path}")
         if hashlib.sha256(raw).hexdigest() != image["sha256"]:
             fail(f"image hash mismatch: {path}")
 
