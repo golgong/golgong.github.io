@@ -16,28 +16,6 @@ SYSTEM_FONT = Path(r"C:\Windows\Fonts\NotoSansKR-VF.ttf")
 BRAND = "골때리는공작소"
 SITE = "golgong.github.io"
 
-TITLE_LINES = {
-    "one-person-households-top-districts": [
-        "1인 가구가 가장 많은",
-        "동네는 어디인가",
-        "— 전국 196개 시군구 집계",
-    ],
-    "ad-depth-ctr": ["같은 클릭률인데", "광고비가 35배 차이납니다"],
-    "clinic-open-by-specialty": ["개원 수는 그대로인데", "진료과목이 달라졌습니다"],
-    "clinic-location-by-specialty": ["동네별 병원", "진료과목 분포"],
-    "internal-medicine-review-count": ["내과 5,786곳,", "리뷰 많은 곳"],
-    "hospital-keyword-ad-cost": ["병원 검색어 광고비,", "클릭 한 번에", "980원에서 9만원"],
-    "orthopedics-review-count": ["정형외과 2,841곳,", "리뷰 많은 곳"],
-    "dermatology-review-count": ["피부과 1,556곳,", "리뷰 많은 곳"],
-    "dental-clinic-review-count": ["치과 19,396곳,", "리뷰 많은 곳"],
-    "cosmetic-medical-keyword-ad-cost": ["임플란트 클릭 한 번에", "71,150원"],
-    "manual-therapy-price-gap": ["같은 30분 도수치료,", "1만원과 30만원"],
-    "what-119-actually-does": ["119는 불 끄러", "가지 않는다"],
-    "most-used-medicines-korea": ["한국인이 제일 많이", "먹는 약"],
-    "baby-names-seoul": ["민준이는 어디 갔을까"],
-}
-
-
 def file_sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -65,7 +43,7 @@ def cover_html(
     url_size = 16 if wide else 18
     label_size = 15 if wide else 17
     main_size = title_size(lines, wide)
-    title_width = 82 if wide else 78
+    title_width = 96
     line_markup = "".join(f"<span>{html.escape(line)}</span>" for line in lines)
     return f"""<!doctype html>
 <html lang="ko">
@@ -125,6 +103,22 @@ def render(page, *, source: Path, lines: list[str], label: str, output: Path, wi
         page.goto(temp_path.as_uri(), wait_until="load")
         page.evaluate("document.fonts.ready")
         page.wait_for_function("document.querySelector('.art').complete && document.querySelector('.art').naturalWidth > 0")
+        page.evaluate(
+            """() => {
+              const title = document.querySelector('.title');
+              const line = title.querySelector('span');
+              let low = 24;
+              let high = parseFloat(getComputedStyle(title).fontSize);
+              while (high - low > 0.25) {
+                const middle = (low + high) / 2;
+                title.style.fontSize = `${middle}px`;
+                if (line.scrollWidth <= title.clientWidth) low = middle;
+                else high = middle;
+              }
+              title.style.fontSize = `${Math.floor(low)}px`;
+              if (line.scrollWidth > title.clientWidth) throw new Error('cover title does not fit');
+            }"""
+        )
         page.screenshot(path=str(output), type="jpeg", quality=92, full_page=False)
     finally:
         temp_path.unlink(missing_ok=True)
@@ -133,12 +127,6 @@ def render(page, *, source: Path, lines: list[str], label: str, output: Path, wi
 def main() -> None:
     data = json.loads(DATA_PATH.read_text(encoding="utf-8"))
     posts = sorted(data["posts"], key=lambda post: post["date"])
-    missing = {post["slug"] for post in posts} - set(TITLE_LINES)
-    if missing:
-        raise SystemExit(f"missing title line rules: {sorted(missing)}")
-    for post in posts:
-        if "".join(TITLE_LINES[post["slug"]]).replace(" ", "") != post["title"].replace(" ", ""):
-            raise SystemExit(f"title line rule differs from source: {post['slug']}")
     if not SYSTEM_FONT.is_file():
         raise SystemExit("Noto Sans KR font is missing")
 
@@ -151,18 +139,21 @@ def main() -> None:
             if not source.is_file():
                 raise SystemExit(f"missing source image: {source}")
             target_dir = ROOT / "assets" / "images" / post["slug"]
-            version = "v3" if post["slug"] == "baby-names-seoul" else "v2"
+            version = "v3"
             featured = target_dir / f"featured-{version}.jpg"
             og = target_dir / f"og-{version}.jpg"
-            render(page, source=source, lines=TITLE_LINES[post["slug"]], label="DATA RECORD", output=featured, width=1448, height=1086)
-            render(page, source=source, lines=TITLE_LINES[post["slug"]], label="DATA RECORD", output=og, width=1200, height=630)
+            post["featured_image"] = "/" + featured.relative_to(ROOT).as_posix()
+            post["og_image"] = "/" + og.relative_to(ROOT).as_posix()
+            title = [post["title"]]
+            render(page, source=source, lines=title, label="DATA RECORD", output=featured, width=1448, height=1086)
+            render(page, source=source, lines=title, label="DATA RECORD", output=og, width=1200, height=630)
             outputs.extend((featured, og))
 
         home_source = SOURCE_DIR / "home.png"
         home_dir = ROOT / "assets" / "images" / "home"
-        home_featured = home_dir / "hero-v2.jpg"
-        home_og = home_dir / "og-v2.jpg"
-        home_lines = ["아무도 세어 보지 않은 것을", "끝까지 확인합니다"]
+        home_featured = home_dir / "hero-v3.jpg"
+        home_og = home_dir / "og-v3.jpg"
+        home_lines = ["아무도 세어 보지 않은 것을 끝까지 확인합니다"]
         render(page, source=home_source, lines=home_lines, label="INDEPENDENT DATA JOURNAL", output=home_featured, width=1448, height=1086)
         render(page, source=home_source, lines=home_lines, label="INDEPENDENT DATA JOURNAL", output=home_og, width=1200, height=630)
         outputs.extend((home_featured, home_og))
@@ -172,14 +163,26 @@ def main() -> None:
         "/" + path.relative_to(ROOT).as_posix(): file_sha256(path)
         for path in outputs
     }
-    updated_paths: set[str] = set()
+    images_by_path = {image["path"]: image for image in data["images"]}
     for image in data["images"]:
         if image["path"] in rendered_hashes:
             image["sha256"] = rendered_hashes[image["path"]]
-            updated_paths.add(image["path"])
-    if updated_paths != set(rendered_hashes):
-        missing_paths = sorted(set(rendered_hashes) - updated_paths)
-        raise SystemExit(f"rendered images missing from blog manifest: {missing_paths}")
+    for path, digest in rendered_hashes.items():
+        if path in images_by_path:
+            continue
+        parts = Path(path.lstrip("/")).parts
+        slug = parts[-2]
+        if slug == "home":
+            kind = "home-cover" if parts[-1].startswith("hero-") else "home-og"
+        else:
+            kind = "editorial-cover" if parts[-1].startswith("featured-") else "editorial-og"
+        data["images"].append(
+            {
+                "source": f"render:{kind}:{slug}:2026-08-22-v3",
+                "path": path,
+                "sha256": digest,
+            }
+        )
     DATA_PATH.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     for path in outputs:
