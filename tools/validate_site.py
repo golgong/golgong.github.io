@@ -89,9 +89,9 @@ def validate_social_image(page: BeautifulSoup, expected_url: str, expected_alt: 
 def main() -> None:
     data = json.loads((ROOT / "data" / "blog.json").read_text(encoding="utf-8"))
     posts = sorted(data["posts"], key=lambda p: (p["date"], p["id"]), reverse=True)
-    if len(posts) != 14 or {p["id"] for p in posts} != {21, 24, 43, 45, 78, 97, 122, 124, 128, 134, 138, 141, 144, 150}:
+    if len(posts) != 15 or {p["id"] for p in posts} != {21, 24, 43, 45, 78, 97, 122, 124, 128, 134, 138, 141, 144, 150, 151}:
         fail("published post identity mismatch")
-    if len({p["description"] for p in posts}) != 14:
+    if len({p["description"] for p in posts}) != 15:
         fail("post descriptions are not unique")
 
     html_files = [
@@ -207,7 +207,7 @@ def main() -> None:
         fail("home alternating journal layout mismatch")
     home_images = home.select(".journal-row__image img")
     expected_home_images = {post["featured_image"] for post in posts}
-    if len(home_images) != 14 or {image.get("src") for image in home_images} != expected_home_images:
+    if len(home_images) != len(posts) or {image.get("src") for image in home_images} != expected_home_images:
         fail("home editorial image set mismatch")
     if any(image.get("loading") != "lazy" for image in home_images):
         fail("journal images below the home hero must load lazily")
@@ -225,7 +225,7 @@ def main() -> None:
     if home.select_one("#service-heading").get_text(" ", strip=True) != SERVICE_HEADLINE:
         fail("home service headline mismatch")
     visible_summaries = home.select(".journal-row__summary")
-    if len(visible_summaries) != 14 or any(
+    if len(visible_summaries) != len(posts) or any(
         not re.search(r"[.!?]$", summary.get_text(" ", strip=True)) for summary in visible_summaries
     ):
         fail("home contains an incomplete visible summary")
@@ -309,7 +309,19 @@ def main() -> None:
             post["body_html"].replace(OLD_ARTICLE_SERVICE_HEADLINE, SERVICE_HEADLINE),
             "html.parser",
         )
-        if text_counter(article_body) != text_counter(public_source_body):
+        article_body_for_source = BeautifulSoup(str(article_body), "html.parser")
+        download_section = article_body_for_source.select_one(".article-downloads")
+        expected_download_paths = {item["path"] for item in post.get("downloads", [])}
+        if expected_download_paths:
+            if download_section is None:
+                fail(f"download section missing: {post['slug']}")
+            actual_download_paths = {link.get("href") for link in download_section.select("a[href]")}
+            if actual_download_paths != expected_download_paths:
+                fail(f"download links mismatch: {post['slug']}")
+            download_section.decompose()
+        elif download_section is not None:
+            fail(f"unexpected download section: {post['slug']}")
+        if text_counter(article_body_for_source) != text_counter(public_source_body):
             fail(f"visible article text changed: {post['slug']}")
         direct_children = [node for node in article_body.children if getattr(node, "name", None)]
         if (
@@ -328,8 +340,8 @@ def main() -> None:
             fail(f"conflicting inline table layout remains: {post['slug']}")
         table_total += tables
 
-    if table_total != 73:
-        fail(f"expected 73 tables, got {table_total}")
+    if table_total != 77:
+        fail(f"expected 77 tables, got {table_total}")
 
     for path in html_files:
         soup = BeautifulSoup(path.read_text(encoding="utf-8"), "html.parser")
@@ -342,14 +354,21 @@ def main() -> None:
             url = element.get(attribute)
             if url.startswith(("http://", "https://")):
                 host = urllib.parse.urlsplit(url).netloc
-                if host not in {"golgong.github.io", "schema.org", "www.googletagmanager.com"}:
+                if host not in {
+                    "golgong.github.io",
+                    "schema.org",
+                    "www.googletagmanager.com",
+                    "developers.naver.com",
+                    "apicenter.commerce.naver.com",
+                    "github.com",
+                }:
                     fail(f"unexpected external resource/link in {path}: {url}")
             candidate = local_file(url)
             if candidate is not None and not candidate.is_file():
                 fail(f"broken internal link in {path}: {url}")
 
-    if len(data["images"]) != 95:
-        fail(f"expected 95 image records, got {len(data['images'])}")
+    if len(data["images"]) != 97:
+        fail(f"expected 97 image records, got {len(data['images'])}")
     expected_images = {(ROOT / image["path"].lstrip("/")).resolve() for image in data["images"]}
     actual_images = {path.resolve() for path in (ROOT / "assets" / "images").rglob("*") if path.is_file()}
     if actual_images != expected_images:
@@ -430,12 +449,15 @@ def main() -> None:
             fail(f"JavaScript cache key mismatch: {path}")
 
     manifest = json.loads((ROOT / "migration-manifest.json").read_text(encoding="utf-8"))
-    if manifest["post_count"] != 14 or set(manifest["paths"]) != expected_paths:
+    if manifest["post_count"] != 15 or set(manifest["paths"]) != expected_paths:
         fail("migration manifest mismatch")
     expected_manifest_files = {
         "index.html", "about/index.html", "privacy/index.html", "404.html",
         "feed.xml", "sitemap.xml", "robots.txt", "assets/css/site.css",
         "assets/js/site.js",
+        "assets/data/naver-shopping-api-category-matching-test/method-results.csv",
+        "assets/data/naver-shopping-api-category-matching-test/split-results.csv",
+        "assets/data/naver-shopping-api-category-matching-test/summary.json",
         *(post["path"].lstrip("/") + "index.html" for post in posts),
     }
     if set(manifest["files"]) != expected_manifest_files:
@@ -445,7 +467,7 @@ def main() -> None:
         if hashlib.sha256(path.read_bytes()).hexdigest() != expected_hash:
             fail(f"generated file changed after build: {relative}")
 
-    print("VALIDATED posts=14 tables=73 images=95 sitemap=16 feed=14 links=ok seo=ok")
+    print("VALIDATED posts=15 tables=77 images=97 sitemap=17 feed=15 links=ok seo=ok")
 
 
 if __name__ == "__main__":

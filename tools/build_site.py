@@ -73,7 +73,7 @@ def enhance_tables(body_html: str) -> str:
     )
 
 
-def enhance_article(body_html: str) -> str:
+def enhance_article(body_html: str, appendix_html: str = "") -> str:
     body_html = body_html.replace(OLD_ARTICLE_SERVICE_HEADLINE, SERVICE_HEADLINE)
     pattern = re.compile(
         r'<aside class="article-note">\s*(<p\b.*?</p>)\s*(<p\b.*?</p>)\s*</aside>',
@@ -88,7 +88,10 @@ def enhance_article(body_html: str) -> str:
         body_html,
         count=1,
     )
-    body_html = body_html.rstrip() + f'\n<aside class="article-contact">{contact_note}</aside>'
+    body_html = body_html.rstrip()
+    if appendix_html:
+        body_html += f"\n{appendix_html}"
+    body_html += f'\n<aside class="article-contact">{contact_note}</aside>'
     return enhance_tables(body_html)
 
 
@@ -234,6 +237,23 @@ def article_schema(post: dict) -> dict:
     return schema
 
 
+def render_downloads(post: dict) -> str:
+    downloads = post.get("downloads", [])
+    if not downloads:
+        return ""
+    items = "".join(
+        f'<li><a href="{esc(item["path"])}" download>{esc(item["label"])}</a></li>'
+        for item in downloads
+    )
+    return (
+        '<section class="article-downloads">'
+        '<h2>결과 파일</h2>'
+        '<p>원천 상품명과 URL은 재배포하지 않고, 방식별 집계와 분할 결과를 함께 공개합니다.</p>'
+        f'<ul>{items}</ul>'
+        '</section>'
+    )
+
+
 def render_article(post: dict, posts: list[dict]) -> str:
     canonical = SITE_URL + post["path"]
     image = SITE_URL + post["og_image"] if post.get("og_image") else None
@@ -273,7 +293,7 @@ def render_article(post: dict, posts: list[dict]) -> str:
     </header>
     {hero}
     <div class="article-body">
-{enhance_article(post["body_html"])}
+{enhance_article(post["body_html"], render_downloads(post))}
     </div>
   </article>
   <section class="post-nav-wrap" aria-labelledby="continue-heading">
@@ -776,6 +796,30 @@ time, table { font-variant-numeric: tabular-nums; }
 .article-body a { overflow-wrap: anywhere; }
 .article-body ul, .article-body ol { padding-left: 1.35em; }
 .article-body li + li { margin-top: .45em; }
+.article-downloads {
+  margin: 52px 0 0;
+  padding: 28px;
+  border: 1px solid var(--line);
+  background: #f5f2ea;
+}
+.article-downloads h2 { margin-top: 0; }
+.article-downloads ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.article-downloads li + li { margin-top: 0; }
+.article-downloads a {
+  display: inline-block;
+  padding: 10px 14px;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  text-decoration: none;
+}
+.article-downloads a:hover { background: var(--ink); color: var(--paper); }
 .article-note {
   margin: 0 0 48px !important;
   padding: 26px 28px !important;
@@ -1114,8 +1158,8 @@ CSS_VERSION = hashlib.sha256((CSS.strip() + "\n").encode("utf-8")).hexdigest()[:
 
 def validate(data: dict) -> None:
     posts = data["posts"]
-    if len(posts) != 14:
-        raise RuntimeError(f"expected 14 posts, got {len(posts)}")
+    if len(posts) != 15:
+        raise RuntimeError(f"expected 15 posts, got {len(posts)}")
     paths = [p["path"] for p in posts]
     if len(paths) != len(set(paths)):
         raise RuntimeError("duplicate post paths")
@@ -1157,6 +1201,11 @@ def main() -> None:
                ROOT / "sitemap.xml", ROOT / "robots.txt", ROOT / "404.html",
                ROOT / "assets" / "css" / "site.css", ROOT / "assets" / "js" / "site.js"]
     tracked.extend(ROOT / p["path"].lstrip("/") / "index.html" for p in posts)
+    tracked.extend([
+        ROOT / "assets" / "data" / "naver-shopping-api-category-matching-test" / "method-results.csv",
+        ROOT / "assets" / "data" / "naver-shopping-api-category-matching-test" / "split-results.csv",
+        ROOT / "assets" / "data" / "naver-shopping-api-category-matching-test" / "summary.json",
+    ])
     manifest = {
         "version": 1,
         "source": data["source"],

@@ -1,0 +1,24 @@
+{
+  "run_date": "2026-08-22",
+  "commerce_api": {
+    "oauth_status": 200,
+    "categories": 5815,
+    "live_leaf_categories": 4999,
+    "own_store_products": 0
+  },
+  "evaluation": {
+    "rows": 64,
+    "catalog_consensus_used": 34,
+    "taxonomy_tfidf_fallback_used": 30,
+    "top1_correct": 47,
+    "top1_accuracy": 0.7344,
+    "top3_correct": 52,
+    "top3_accuracy": 0.8125,
+    "splits": {
+      "rules": {"rows": 34, "top1_correct": 26, "top3_correct": 28},
+      "development": {"rows": 20, "top1_correct": 11, "top3_correct": 14},
+      "post_fix_recheck": {"rows": 10, "top1_correct": 10, "top3_correct": 10}
+    }
+  },
+  "warning": "공개 추천 라벨을 사용한 내부 기능 시험이다. post_fix_recheck는 봉 포장 단서 오류를 확인하고 수정한 뒤의 재실행이며 독립 홀드아웃이 아니다. 원천 상품명과 URL은 이 공개 파일에 포함하지 않았다."
+}

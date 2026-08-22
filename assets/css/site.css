@@ -293,6 +293,30 @@ time, table { font-variant-numeric: tabular-nums; }
 .article-body a { overflow-wrap: anywhere; }
 .article-body ul, .article-body ol { padding-left: 1.35em; }
 .article-body li + li { margin-top: .45em; }
+.article-downloads {
+  margin: 52px 0 0;
+  padding: 28px;
+  border: 1px solid var(--line);
+  background: #f5f2ea;
+}
+.article-downloads h2 { margin-top: 0; }
+.article-downloads ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.article-downloads li + li { margin-top: 0; }
+.article-downloads a {
+  display: inline-block;
+  padding: 10px 14px;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  text-decoration: none;
+}
+.article-downloads a:hover { background: var(--ink); color: var(--paper); }
 .article-note {
   margin: 0 0 48px !important;
   padding: 26px 28px !important;

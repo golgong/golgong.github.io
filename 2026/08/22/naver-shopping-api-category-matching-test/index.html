@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f3f0e9">
+<meta name="google-analytics-id" content="G-569GH22CPH">
+<script>
+window.dataLayer = window.dataLayer || [];
+window.gtag = window.gtag || function(){window.dataLayer.push(arguments);};
+window["ga-disable-G-569GH22CPH"] = true;
+window.gtag("consent", "default", {
+  analytics_storage: "denied",
+  ad_storage: "denied",
+  ad_user_data: "denied",
+  ad_personalization: "denied"
+});
+window.gtag("js", new Date());
+window.gtag("config", "G-569GH22CPH", {
+  send_page_view: false,
+  allow_google_signals: false,
+  allow_ad_personalization_signals: false
+});
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-569GH22CPH"></script>
+<script defer src="/assets/js/site.js?v=967b0bdce37d"></script>
+<title>네이버 쇼핑 API가 사라진 뒤</title>
+<meta name="description" content="종료된 네이버 쇼핑 검색 API를 대신할 수 있는지 커머스 API의 전체 카테고리와 카탈로그를 연결해 64개 상품명으로 시험했습니다. 무엇이 됐고 어디서 틀렸는지 과정을 기록합니다.">
+<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+<link rel="canonical" href="https://golgong.github.io/2026/08/22/naver-shopping-api-category-matching-test/">
+<link rel="alternate" type="application/rss+xml" title="골때리는공작소" href="https://golgong.github.io/feed.xml">
+<link rel="stylesheet" href="/assets/css/site.css?v=a0d370e88e51">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:site_name" content="골때리는공작소">
+<meta property="og:type" content="article">
+<meta property="og:title" content="네이버 쇼핑 API가 사라진 뒤">
+<meta property="og:description" content="종료된 네이버 쇼핑 검색 API를 대신할 수 있는지 커머스 API의 전체 카테고리와 카탈로그를 연결해 64개 상품명으로 시험했습니다. 무엇이 됐고 어디서 틀렸는지 과정을 기록합니다.">
+<meta property="og:url" content="https://golgong.github.io/2026/08/22/naver-shopping-api-category-matching-test/">
+<meta property="og:image" content="https://golgong.github.io/assets/images/naver-shopping-api-category-matching-test/og-v4.jpg">
+<meta property="og:image:alt" content="네이버 쇼핑 API가 사라진 뒤">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://golgong.github.io/assets/images/naver-shopping-api-category-matching-test/og-v4.jpg">
+<meta name="twitter:image:alt" content="네이버 쇼핑 API가 사라진 뒤">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="article:published_time" content="2026-08-22T21:50:00+09:00">
+<meta property="article:modified_time" content="2026-08-22T21:50:00+09:00">
+<meta name="twitter:title" content="네이버 쇼핑 API가 사라진 뒤">
+<meta name="twitter:description" content="종료된 네이버 쇼핑 검색 API를 대신할 수 있는지 커머스 API의 전체 카테고리와 카탈로그를 연결해 64개 상품명으로 시험했습니다. 무엇이 됐고 어디서 틀렸는지 과정을 기록합니다.">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://golgong.github.io/2026/08/22/naver-shopping-api-category-matching-test/"},"headline":"네이버 쇼핑 API가 사라진 뒤","description":"종료된 네이버 쇼핑 검색 API를 대신할 수 있는지 커머스 API의 전체 카테고리와 카탈로그를 연결해 64개 상품명으로 시험했습니다. 무엇이 됐고 어디서 틀렸는지 과정을 기록합니다.","datePublished":"2026-08-22T21:50:00+09:00","dateModified":"2026-08-22T21:50:00+09:00","inLanguage":"ko-KR","author":{"@type":"Organization","name":"골때리는공작소","url":"https://golgong.github.io/about/"},"publisher":{"@type":"Organization","name":"골때리는공작소","url":"https://golgong.github.io/"},"url":"https://golgong.github.io/2026/08/22/naver-shopping-api-category-matching-test/","image":["https://golgong.github.io/assets/images/naver-shopping-api-category-matching-test/og-v4.jpg"]}</script>
+</head>
+<body>
+<a class="skip-link" href="#main-content">본문으로 바로가기</a>
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="/" aria-label="골때리는공작소 홈"><span class="brand__mark" aria-hidden="true"></span>골때리는공작소</a>
+    <nav aria-label="주요 메뉴">
+      <a href="/">전체 글</a>
+      <a href="/about/">소개</a>
+    </nav>
+  </div>
+</header>
+<main id="main-content" class="article-shell" tabindex="-1">
+  <article>
+    <header class="article-header">
+      <p class="eyebrow">Data note · 2026-08-22</p>
+      <h1>네이버 쇼핑 API가 사라진 뒤</h1>
+      <div class="article-meta"><span>공개 데이터 분석</span><span>자료 수집·가공</span></div>
+    </header>
+    <figure class="hero"><img src="/assets/images/naver-shopping-api-category-matching-test/featured-v4.jpg" alt="네이버 쇼핑 API가 사라진 뒤 대표 이미지" width="1448" height="1086" fetchpriority="high" decoding="async"></figure>
+    <div class="article-body">
+<aside class="article-note"><p>2026년 8월 22일, 네이버 커머스 API를 실제로 호출하고 현재 리프 카테고리 4,999개와 공개 상품명 64건을 대조했습니다. 아래 수치는 판매 성능이 아니라 내부 기능 시험 결과입니다.</p></aside>
+<p class="wp-block-paragraph">네이버 쇼핑 검색 API는 2026년 7월 31일 종료됐습니다.</p>
+<p class="wp-block-paragraph">예전 API에 검색어를 보내면 상품명, 가격, 판매처, 상품 ID와 대분류부터 세분류까지의 카테고리가 함께 돌아왔습니다. 상품명을 검색한 뒤 결과에 반복해서 나타나는 카테고리를 모으면 대량 상품의 카테고리 후보를 만들 수 있었습니다.</p>
+<p class="wp-block-paragraph">API가 사라지면서 상품 검색 기능만 없어진 것이 아닙니다. 상품명과 네이버 쇼핑 카테고리를 연결하던 자동화 수단도 함께 사라졌습니다.</p>
+<h2>남아 있는 공식 API를 조합해 보기로 했습니다</h2>
+<p class="wp-block-paragraph">현재 네이버 커머스 API에는 전체 카테고리 조회와 카탈로그 조회가 있습니다. 그러나 상품명을 넣으면 적절한 최하위 카테고리를 추천하는 기능은 없습니다. 네이버도 공식 답변에서 자동 카테고리 매칭 API는 제공하지 않는다고 밝혔습니다.</p>
+<p class="wp-block-paragraph">처음에는 공개 자료에서 모은 34개 카테고리만 후보로 넣어 흐름을 만들었습니다. 프로그램이 돌아가는지는 볼 수 있었지만 네이버 전체 카테고리를 대상으로 한 시험은 아니었습니다. 현행 카테고리표가 필요했습니다.</p>
+<p class="wp-block-paragraph">커머스 API 애플리케이션을 등록하고 우리 스토어 권한으로 OAuth SELF 토큰을 발급했습니다. 인증값은 환경 변수로만 전달했고 소스와 결과 파일에는 남기지 않았습니다.</p>
+<figure class="wp-block-table is-style-stripes" tabindex="0" role="region" aria-label="데이터 표. 좌우로 이동해 볼 수 있습니다.">
+<table>
+<thead><tr><th>확인 항목</th><th>실제 결과</th></tr></thead>
+<tbody>
+<tr><td>OAuth 토큰 발급</td><td>HTTP 200</td></tr>
+<tr><td>토큰 유효시간</td><td>10,799초</td></tr>
+<tr><td>전체 카테고리</td><td>5,815개</td></tr>
+<tr><td>현재 사용 가능한 최하위 카테고리</td><td>4,999개</td></tr>
+<tr><td>최하위 ID 중복·빈 경로</td><td>각 0개</td></tr>
+<tr><td>연결 스토어의 등록 상품</td><td>0개</td></tr>
+</tbody>
+</table>
+</figure>
+<p class="wp-block-paragraph">스토어 상품 조회도 정상 응답을 받았지만 등록 상품은 없었습니다. 이 조회는 네이버 쇼핑 전체의 경쟁 상품이 아니라 연결된 판매자 자신의 상품을 다룹니다.</p>
+<h2>오래된 카테고리표를 넣으면 안 됐습니다</h2>
+<p class="wp-block-paragraph">전체 5,815개 가운데 현재 상품 등록에 사용할 수 있는 최하위 카테고리 4,999개만 저장했습니다. 운영 프로그램은 이 목록을 주기적으로 다시 받아야 합니다.</p>
+<p class="wp-block-paragraph">공개 자료를 다시 확인하는 과정에서 쿠키·비스킷은 <code>50017100</code>에서 <code>50022679</code>로, 아이스크림은 <code>50013240</code>에서 <code>50023080</code>으로 ID가 바뀐 사례를 찾았습니다. 과거 표를 프로그램에 고정하면 이름이 같아 보여도 잘못된 ID를 보낼 수 있습니다.</p>
+<h2>정답이라고 부를 수 없는 64건으로 시작했습니다</h2>
+<p class="wp-block-paragraph">외부 판매자에게 파일을 받지 않았습니다. 공개 페이지에서 상품명과 스마트스토어 추천 카테고리가 함께 표시된 자료를 모았고, 원천 카테고리가 명백히 이상한 6건은 평가에서 뺐습니다.</p>
+<ul>
+<li>규칙 작성용 34건</li>
+<li>개발 확인용 20건</li>
+<li>마지막 확인용 10건</li>
+</ul>
+<p class="wp-block-paragraph">이 값은 판매자가 최종 확정한 정답이 아닙니다. 공개 원천에 붙어 있던 추천값을 사람이 확인한 것이므로 <code>gold</code>가 아니라 <code>source_labeled</code>로 기록했습니다.</p>
+<p class="wp-block-paragraph">공개 공급사 페이지를 자동으로 더 모으는 방법도 확인했습니다. 기술적으로는 가능했지만 이용약관에 맞지 않아 중단했습니다. 시험 중 받은 임시 HTML 60개와 수집 코드는 삭제했고 평가에 사용하지 않았습니다.</p>
+<h2>네 가지 방법을 같은 자료에 대조했습니다</h2>
+<p class="wp-block-paragraph">첫 번째는 상품명과 4,999개 카테고리 경로의 글자가 얼마나 겹치는지 보는 문자 TF-IDF였습니다. 두 번째는 다국어 E5 의미 모델, 세 번째는 공식 카탈로그 첫 결과, 네 번째는 카탈로그 상위 세 결과가 같은 카테고리일 때만 채택하고 나머지를 문자 TF-IDF로 넘기는 방식이었습니다.</p>
+<figure class="wp-block-table is-style-stripes" tabindex="0" role="region" aria-label="데이터 표. 좌우로 이동해 볼 수 있습니다.">
+<table>
+<thead><tr><th>방식</th><th>Top-1</th><th>Top-3</th></tr></thead>
+<tbody>
+<tr><td>카테고리명 문자 TF-IDF</td><td>39/64 (60.9%)</td><td>50/64 (78.1%)</td></tr>
+<tr><td>다국어 E5 의미 모델</td><td>22/64 (34.4%)</td><td>37/64 (57.8%)</td></tr>
+<tr><td>카탈로그 첫 결과 단독</td><td>34/64 (53.1%)</td><td>34/64 (53.1%)</td></tr>
+<tr><td>카탈로그 3개 합의 후 TF-IDF 보완</td><td>47/64 (73.4%)</td><td>52/64 (81.3%)</td></tr>
+</tbody>
+</table>
+</figure>
+<p class="wp-block-paragraph">Top-1은 첫 번째 추천이 원천 라벨과 같았다는 뜻이고, Top-3은 후보 세 개 안에 들어왔다는 뜻입니다. 64건 가운데 34건은 카탈로그 합의를 썼고 30건은 전체 카테고리 문자 비교로 넘겼습니다.</p>
+<p class="wp-block-paragraph">이번 상품명에서는 의미 모델이 문자 비교보다 나빴습니다. 상품명은 자연스러운 문장보다 브랜드, 규격, 수량, 재질과 축약어가 섞인 짧은 문자열에 가깝습니다. 다만 64건의 한 번 시험만으로 의미 모델 전체가 부적합하다고 결론 내릴 수는 없습니다.</p>
+<h2>10/10이라는 숫자를 그대로 쓰면 안 됐습니다</h2>
+<figure class="wp-block-table is-style-stripes" tabindex="0" role="region" aria-label="데이터 표. 좌우로 이동해 볼 수 있습니다.">
+<table>
+<thead><tr><th>자료 구분</th><th>Top-1</th><th>Top-3</th></tr></thead>
+<tbody>
+<tr><td>규칙 작성용 34건</td><td>26/34</td><td>28/34</td></tr>
+<tr><td>개발 확인용 20건</td><td>11/20</td><td>14/20</td></tr>
+<tr><td>수정 후 다시 확인한 10건</td><td>10/10</td><td>10/10</td></tr>
+</tbody>
+</table>
+</figure>
+<p class="wp-block-paragraph"><code>CL 삼양 불닭볶음면 140g x 40봉</code>을 정리하면서 <code>x 40봉</code>을 통째로 지웠더니 봉지라면이 아니라 컵라면으로 갔습니다. 수량 40은 중요하지 않지만 <code>봉</code>은 포장 형태를 가르는 단서였습니다.</p>
+<p class="wp-block-paragraph">오류를 본 뒤 <code>봉</code>을 <code>봉지</code> 단서로 보존하도록 고쳤습니다. 수정 전에는 9/10, 같은 자료를 다시 실행한 뒤 10/10이 됐습니다. 따라서 마지막 10/10은 손대지 않은 홀드아웃 성능이 아니라 오답 수정 후 재확인 결과입니다.</p>
+<p class="wp-block-paragraph"><code>플라스틱</code> 안의 <code>스틱</code>을 등산 스틱으로 잘못 읽는 오류도 있었습니다. 짧은 단어는 독립된 단어이거나 주변 문맥이 맞을 때만 인정하도록 바꿨습니다. 상품 분류에서는 더 큰 AI 모델보다 이런 작은 예외를 정직하게 분리하는 일이 중요했습니다.</p>
+<h2>텀블러 한 건은 어떻게 처리됐나</h2>
+<p class="wp-block-paragraph"><code>스텐 대용량 손잡이 텀블러</code>를 공식 카탈로그에 조회하자 1,711개가 나왔고 상위 다섯 개가 모두 <code>생활/건강 &gt; 주방용품 &gt; 잔/컵 &gt; 텀블러</code>, 카테고리 ID <code>50004540</code>을 가리켰습니다.</p>
+<p class="wp-block-paragraph">이어서 상품명의 속성어로 검색어를 만들고 네이버 검색광고 API의 검색량과 경쟁도를 붙였습니다.</p>
+<figure class="wp-block-table is-style-stripes" tabindex="0" role="region" aria-label="데이터 표. 좌우로 이동해 볼 수 있습니다.">
+<table>
+<thead><tr><th>검색어</th><th>월간 검색 수</th><th>경쟁도</th></tr></thead>
+<tbody>
+<tr><td>텀블러</td><td>134,300</td><td>중간</td></tr>
+<tr><td>스텐 텀블러</td><td>11,710</td><td>높음</td></tr>
+<tr><td>대용량 텀블러</td><td>8,770</td><td>높음</td></tr>
+<tr><td>손잡이 텀블러</td><td>6,090</td><td>중간</td></tr>
+<tr><td>스텐 대용량 텀블러</td><td>10~19</td><td>낮음</td></tr>
+<tr><td>스텐 손잡이 텀블러</td><td>120</td><td>높음</td></tr>
+<tr><td>대용량 손잡이 텀블러</td><td>200</td><td>높음</td></tr>
+<tr><td>스텐 대용량 손잡이 텀블러</td><td>0~18</td><td>낮음</td></tr>
+</tbody>
+</table>
+</figure>
+<p class="wp-block-paragraph">검색량이 작다고 경쟁도까지 낮아지는 것은 아니었습니다. 월 120회인 <code>스텐 손잡이 텀블러</code>의 경쟁도는 높았습니다.</p>
+<p class="wp-block-paragraph">검색광고 API에는 실제 구매 전환과 매출이 없습니다. 검색량이 적고 표현이 구체적이라는 이유만으로 구매 의도가 높다고 부를 수는 없습니다. 그 판단에는 판매자의 노출, 클릭, 주문 자료가 더 필요합니다.</p>
+<h2>이번 시험에서 된 것과 안 된 것</h2>
+<p class="wp-block-paragraph">상품명 CSV를 읽어 현재 네이버 리프 카테고리 Top-3, ID와 전체 경로, 추천 근거, 신뢰도, 사람 확인 필요 여부를 CSV로 내보내는 단계까지 만들었습니다. 카테고리를 정한 뒤 속성어 조합별 검색량과 경쟁 지표도 붙일 수 있습니다.</p>
+<p class="wp-block-paragraph">그러나 종료된 쇼핑 검색 API를 복구한 것은 아닙니다. 경쟁 상품의 이름, 가격, 판매처와 검색 순위를 커머스 API 조합만으로 다시 얻을 수는 없습니다. 커머스 API는 자기 상품을 관리하는 API이고, 예전 쇼핑 검색 API는 전체 검색 결과를 돌려주던 API였습니다.</p>
+<p class="wp-block-paragraph">지금 만들 수 있는 것은 상품명에서 카테고리 후보를 대량으로 만들고 애매한 것만 사람에게 보내는 프로그램입니다. 사람 확인 없이 바로 등록하는 프로그램이라고 부르기에는 아직 이릅니다.</p>
+<h2>다음 시험은 새 정답으로 해야 합니다</h2>
+<ol>
+<li>판매자가 최종 확정한 상품명과 최하위 카테고리 ID를 모읍니다.</li>
+<li>규칙을 만든 자료와 마지막 평가 자료를 완전히 분리합니다.</li>
+<li>카탈로그 세 결과가 일치한 경우와 문자 비교로 넘어간 경우를 나눠 측정합니다.</li>
+<li>자동 확정, Top-3 사람 확인, 추천 중단의 기준을 정합니다.</li>
+<li>사람이 고친 결과는 다음 상품에만 쓰고 같은 평가 자료를 다시 점수 계산에 쓰지 않습니다.</li>
+<li>카테고리 추천 뒤에 검색량, 경쟁도와 실제 주문 자료를 연결합니다.</li>
+</ol>
+<p class="wp-block-paragraph">결론은 두 문장입니다. 상품명에서 네이버 카테고리 후보를 대량으로 만드는 프로그램은 만들 수 있습니다. 하지만 73.4%는 공개 추천 라벨 64건으로 진행한 내부 시험 결과이며 판매 가능한 정확도나 무검수 자동 등록을 뜻하지 않습니다.</p>
+<p class="wp-block-paragraph">가능성은 확인했습니다. 다음에 필요한 것은 더 화려한 모델이 아니라 손대지 않은 새 정답 자료와 실제 검수 결과입니다.</p>
+<h2>확인한 공식 자료</h2>
+<ul>
+<li><a href="https://developers.naver.com/notice/article/32564">네이버 검색 쇼핑·책·전문자료 API 종료 공지</a></li>
+<li><a href="https://developers.naver.com/docs/serviceapi/search/shopping/shopping.md">종료 전 쇼핑 검색 API 응답 항목</a></li>
+<li><a href="https://apicenter.commerce.naver.com/docs/commerce-api/current/get-category-list-product">네이버 커머스 API 전체 카테고리 조회</a></li>
+<li><a href="https://apicenter.commerce.naver.com/docs/commerce-api/current/get-model-list-product">네이버 커머스 API 카탈로그 조회</a></li>
+<li><a href="https://github.com/commerce-api-naver/commerce-api/discussions/3449">자동 카테고리 매칭 API 미제공 답변</a></li>
+</ul>
+<section class="article-downloads"><h2>결과 파일</h2><p>원천 상품명과 URL은 재배포하지 않고, 방식별 집계와 분할 결과를 함께 공개합니다.</p><ul><li><a href="/assets/data/naver-shopping-api-category-matching-test/method-results.csv" download>방식별 결과 CSV</a></li><li><a href="/assets/data/naver-shopping-api-category-matching-test/split-results.csv" download>자료 분할별 결과 CSV</a></li><li><a href="/assets/data/naver-shopping-api-category-matching-test/summary.json" download>전체 집계 JSON</a></li></ul></section>
+<aside class="article-contact"><p>필요한 자료를 대신 분석해 드립니다. 흩어진 자료를 모아 비교표로 만들거나 반복 작업을 프로그램으로 만들 수 있습니다. <a href="mailto:golgong@kakao.com">golgong@kakao.com</a></p></aside>
+    </div>
+  </article>
+  <section class="post-nav-wrap" aria-labelledby="continue-heading">
+    <h2 id="continue-heading" class="eyebrow">이어서 읽기</h2>
+    <nav class="post-nav post-nav--single" aria-label="다른 글"><a href="/2026/08/20/baby-names-seoul/"><span>이전 글</span><strong>민준이는 어디 갔을까</strong></a></nav>
+  </section>
+</main>
+<footer class="site-footer">
+  <div class="site-footer__inner">
+    <div><strong>골때리는공작소</strong><p>공공데이터와 공개 API에서 자료를 모아 정확히 분석합니다.</p></div>
+    <nav aria-label="사이트 안내">
+      <a href="/about/">작업 방식과 문의</a>
+      <a href="/privacy/">방문 분석 안내</a>
+      <button type="button" data-analytics-settings>분석 설정</button>
+    </nav>
+  </div>
+</footer>
+</body>
+</html>
