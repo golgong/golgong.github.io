@@ -183,21 +183,38 @@ def main() -> None:
     expected_paths = {p["path"] for p in posts}
     if len(home_links) != len(posts) or home_paths != expected_paths:
         fail(f"home links differ: {home_paths ^ expected_paths}")
-    if len(home.select(".featured-story")) != 1 or len(home.select(".story-card")) != 13:
-        fail("home editorial layout mismatch")
-    home_images = home.select(".featured-story__image img, .story-card__image img")
+    if home.select_one(".home-intro h1").get_text(" ", strip=True) != "질문. 자료. 확인.":
+        fail("home declaration mismatch")
+    if home.select_one(".home-manifesto .home-hero") is None:
+        fail("home manifesto layout missing")
+    journal_rows = home.select(".journal-row")
+    if (
+        len(journal_rows) != len(posts)
+        or len(home.select(".journal-row--feature")) != 4
+        or len(home.select(".journal-row--reverse")) != 2
+        or len(home.select(".journal-row--compact")) != len(posts) - 4
+    ):
+        fail("home alternating journal layout mismatch")
+    home_images = home.select(".journal-row__image img")
     expected_home_images = {post["featured_image"] for post in posts}
     if len(home_images) != 14 or {image.get("src") for image in home_images} != expected_home_images:
         fail("home editorial image set mismatch")
-    featured_home_image = home.select_one(".featured-story__image img")
-    if featured_home_image is None or featured_home_image.get("loading") != "lazy":
-        fail("latest post image must load lazily below the home hero")
+    if any(image.get("loading") != "lazy" for image in home_images):
+        fail("journal images below the home hero must load lazily")
+    for row in journal_rows:
+        if (
+            row.select_one("h2.visually-hidden") is None
+            or row.select_one(".journal-row__summary") is None
+            or row.select_one(".journal-row__meta time") is None
+            or row.select_one(".journal-row__meta .outline-link") is None
+        ):
+            fail("home journal row content mismatch")
     visitor_strip = home.select_one("[data-visitor-stats]")
     if visitor_strip is None or visitor_strip.select_one("[data-visitor-summary]") is None:
         fail("home visitor statistics strip missing")
     if home.select_one("#service-heading").get_text(" ", strip=True) != SERVICE_HEADLINE:
         fail("home service headline mismatch")
-    visible_summaries = home.select(".featured-story__body > p:not(.eyebrow), .story-card__body > p")
+    visible_summaries = home.select(".journal-row__summary")
     if len(visible_summaries) != 14 or any(
         not re.search(r"[.!?]$", summary.get_text(" ", strip=True)) for summary in visible_summaries
     ):
