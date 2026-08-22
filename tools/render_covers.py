@@ -34,7 +34,7 @@ TITLE_LINES = {
     "manual-therapy-price-gap": ["같은 30분 도수치료,", "1만원과 30만원"],
     "what-119-actually-does": ["119는 불 끄러", "가지 않는다"],
     "most-used-medicines-korea": ["한국인이 제일 많이", "먹는 약"],
-    "baby-names-seoul": ["민준이는", "어디 갔을까"],
+    "baby-names-seoul": ["민준이는 어디 갔을까"],
 }
 
 
@@ -151,8 +151,9 @@ def main() -> None:
             if not source.is_file():
                 raise SystemExit(f"missing source image: {source}")
             target_dir = ROOT / "assets" / "images" / post["slug"]
-            featured = target_dir / "featured-v2.jpg"
-            og = target_dir / "og-v2.jpg"
+            version = "v3" if post["slug"] == "baby-names-seoul" else "v2"
+            featured = target_dir / f"featured-{version}.jpg"
+            og = target_dir / f"og-{version}.jpg"
             render(page, source=source, lines=TITLE_LINES[post["slug"]], label="DATA RECORD", output=featured, width=1448, height=1086)
             render(page, source=source, lines=TITLE_LINES[post["slug"]], label="DATA RECORD", output=og, width=1200, height=630)
             outputs.extend((featured, og))

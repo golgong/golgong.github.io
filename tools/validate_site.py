@@ -331,7 +331,7 @@ def main() -> None:
             if candidate is not None and not candidate.is_file():
                 fail(f"broken internal link in {path}: {url}")
 
-    if len(data["images"]) != 35:
+    if len(data["images"]) != 37:
         fail(f"expected 35 image records, got {len(data['images'])}")
     expected_images = {(ROOT / image["path"].lstrip("/")).resolve() for image in data["images"]}
     actual_images = {path.resolve() for path in (ROOT / "assets" / "images").rglob("*") if path.is_file()}
@@ -428,7 +428,7 @@ def main() -> None:
         if hashlib.sha256(path.read_bytes()).hexdigest() != expected_hash:
             fail(f"generated file changed after build: {relative}")
 
-    print("VALIDATED posts=14 tables=73 images=35 sitemap=16 feed=14 links=ok seo=ok")
+    print("VALIDATED posts=14 tables=73 images=37 sitemap=16 feed=14 links=ok seo=ok")
 
 
 if __name__ == "__main__":
