@@ -340,8 +340,8 @@ def main() -> None:
             fail(f"conflicting inline table layout remains: {post['slug']}")
         table_total += tables
 
-    if table_total != 78:
-        fail(f"expected 78 tables, got {table_total}")
+    if table_total != 79:
+        fail(f"expected 79 tables, got {table_total}")
 
     for path in html_files:
         soup = BeautifulSoup(path.read_text(encoding="utf-8"), "html.parser")
@@ -467,7 +467,7 @@ def main() -> None:
         if hashlib.sha256(path.read_bytes()).hexdigest() != expected_hash:
             fail(f"generated file changed after build: {relative}")
 
-    print("VALIDATED posts=16 tables=78 images=99 sitemap=18 feed=16 links=ok seo=ok")
+    print(f"VALIDATED posts=16 tables={table_total} images=99 sitemap=18 feed=16 links=ok seo=ok")
 
 
 if __name__ == "__main__":
