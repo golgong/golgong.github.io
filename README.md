@@ -4,7 +4,7 @@
 
 ## 구성
 
-- `data/blog.json`: 공개 글 14편과 소개 페이지의 원문 데이터
+- `data/blog.json`: 공개 글 16편과 소개 페이지의 원문 데이터
 - `assets/images/`: WordPress에서 옮긴 대표 이미지와 본문 이미지
 - `tools/build_site.py`: 홈·개별 글·RSS·사이트맵 생성
 - `tools/validate_site.py`: 본문·표·이미지·링크·검색 메타정보 검증

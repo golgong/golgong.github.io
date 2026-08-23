@@ -1158,8 +1158,8 @@ CSS_VERSION = hashlib.sha256((CSS.strip() + "\n").encode("utf-8")).hexdigest()[:
 
 def validate(data: dict) -> None:
     posts = data["posts"]
-    if len(posts) != 15:
-        raise RuntimeError(f"expected 15 posts, got {len(posts)}")
+    if len(posts) != 16:
+        raise RuntimeError(f"expected 16 posts, got {len(posts)}")
     paths = [p["path"] for p in posts]
     if len(paths) != len(set(paths)):
         raise RuntimeError("duplicate post paths")

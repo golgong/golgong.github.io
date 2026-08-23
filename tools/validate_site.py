@@ -89,9 +89,9 @@ def validate_social_image(page: BeautifulSoup, expected_url: str, expected_alt: 
 def main() -> None:
     data = json.loads((ROOT / "data" / "blog.json").read_text(encoding="utf-8"))
     posts = sorted(data["posts"], key=lambda p: (p["date"], p["id"]), reverse=True)
-    if len(posts) != 15 or {p["id"] for p in posts} != {21, 24, 43, 45, 78, 97, 122, 124, 128, 134, 138, 141, 144, 150, 151}:
+    if len(posts) != 16 or {p["id"] for p in posts} != {21, 24, 43, 45, 78, 97, 122, 124, 128, 134, 138, 141, 144, 150, 151, 152}:
         fail("published post identity mismatch")
-    if len({p["description"] for p in posts}) != 15:
+    if len({p["description"] for p in posts}) != 16:
         fail("post descriptions are not unique")
 
     html_files = [
@@ -340,8 +340,8 @@ def main() -> None:
             fail(f"conflicting inline table layout remains: {post['slug']}")
         table_total += tables
 
-    if table_total != 77:
-        fail(f"expected 77 tables, got {table_total}")
+    if table_total != 78:
+        fail(f"expected 78 tables, got {table_total}")
 
     for path in html_files:
         soup = BeautifulSoup(path.read_text(encoding="utf-8"), "html.parser")
@@ -367,8 +367,8 @@ def main() -> None:
             if candidate is not None and not candidate.is_file():
                 fail(f"broken internal link in {path}: {url}")
 
-    if len(data["images"]) != 97:
-        fail(f"expected 97 image records, got {len(data['images'])}")
+    if len(data["images"]) != 99:
+        fail(f"expected 99 image records, got {len(data['images'])}")
     expected_images = {(ROOT / image["path"].lstrip("/")).resolve() for image in data["images"]}
     actual_images = {path.resolve() for path in (ROOT / "assets" / "images").rglob("*") if path.is_file()}
     if actual_images != expected_images:
@@ -449,7 +449,7 @@ def main() -> None:
             fail(f"JavaScript cache key mismatch: {path}")
 
     manifest = json.loads((ROOT / "migration-manifest.json").read_text(encoding="utf-8"))
-    if manifest["post_count"] != 15 or set(manifest["paths"]) != expected_paths:
+    if manifest["post_count"] != 16 or set(manifest["paths"]) != expected_paths:
         fail("migration manifest mismatch")
     expected_manifest_files = {
         "index.html", "about/index.html", "privacy/index.html", "404.html",
@@ -467,7 +467,7 @@ def main() -> None:
         if hashlib.sha256(path.read_bytes()).hexdigest() != expected_hash:
             fail(f"generated file changed after build: {relative}")
 
-    print("VALIDATED posts=15 tables=77 images=97 sitemap=17 feed=15 links=ok seo=ok")
+    print("VALIDATED posts=16 tables=78 images=99 sitemap=18 feed=16 links=ok seo=ok")
 
 
 if __name__ == "__main__":
