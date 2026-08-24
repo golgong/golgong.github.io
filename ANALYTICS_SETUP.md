@@ -23,7 +23,7 @@ python .\tools\validate_site.py
 
 ## 2. 공개 통계 자동 갱신
 
-`.github/workflows/update-visitor-stats.yml`은 매일 오전 6시 17분경 최근 방문 통계를 갱신합니다. 당일과 전일은 빼고, 2일 전까지의 최근 7일을 집계합니다.
+`.github/workflows/update-visitor-stats.yml`은 매일 오전 6시 17분경 전날의 방문자·방문 횟수·페이지 조회 수와 최근 7일의 일별 방문자 추이를 갱신합니다.
 
 Google Cloud에서 Analytics Data API를 켜고 GitHub Actions용 Workload Identity Federation과 서비스 계정을 만듭니다. 서비스 계정 이메일에는 GA4 속성의 `Viewer` 권한만 줍니다.
 
@@ -41,7 +41,7 @@ GitHub 저장소의 Actions variables에 아래 세 값을 등록합니다.
 
 ## 3. 공개 범위
 
-홈에는 Google Analytics의 `activeUsers`로 측정된 최근 7일 분석 허용 활성 사용자와 직전 7일 대비 변화만 표시합니다. 이는 실제 사람 수가 아니며, 한 사람이 여러 기기나 브라우저를 사용하면 서로 다르게 집계될 수 있습니다. 페이지별 방문, 유입어, 위치, 기기, 방문 시각은 공개하지 않습니다. 최근 7일 분석 허용 활성 사용자가 5명 미만이면 정확한 숫자와 추이를 숨깁니다.
+홈에는 Google Analytics의 `activeUsers`로 측정된 전날 방문자 수, `sessions` 방문 횟수, `screenPageViews` 페이지 조회 수와 최근 7일의 일별 방문자 추이를 표시합니다. 이는 실제 사람 수가 아니며, 한 사람이 여러 기기나 브라우저를 사용하면 서로 다르게 집계될 수 있습니다. 페이지별 방문, 유입어, 위치, 기기, 방문 시각은 공개하지 않습니다. GA4 처리 지연으로 전날 수치는 다음 갱신 때 보정될 수 있습니다.
 
 ## 4. 인증 제한
 

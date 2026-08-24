@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ROOT / "data" / "visitor-stats.json"
 API_URL = "https://analyticsdata.googleapis.com/v1beta/properties/{property_id}:runReport"
 SEOUL = ZoneInfo("Asia/Seoul")
-PRIVACY_THRESHOLD = 5
+DAILY_WINDOW_DAYS = 7
 
 
 def require_property_id(value: str) -> str:
@@ -25,16 +25,18 @@ def require_property_id(value: str) -> str:
     return value
 
 
-def request_report(
+def request_daily_report(
     *, access_token: str, property_id: str, start_date: date, end_date: date,
-    metrics: tuple[str, ...],
-) -> dict[str, int]:
+) -> dict[date, dict[str, int]]:
+    metrics = ("activeUsers", "sessions", "screenPageViews")
     body = json.dumps(
         {
             "dateRanges": [
                 {"startDate": start_date.isoformat(), "endDate": end_date.isoformat()}
             ],
+            "dimensions": [{"name": "date"}],
             "metrics": [{"name": name} for name in metrics],
+            "orderBys": [{"dimension": {"dimensionName": "date"}}],
             "keepEmptyRows": True,
         },
         separators=(",", ":"),
@@ -45,7 +47,7 @@ def request_report(
         headers={
             "Authorization": f"Bearer {access_token}",
             "Content-Type": "application/json",
-            "User-Agent": "golgong-visitor-stats/1.0",
+            "User-Agent": "golgong-visitor-stats/2.0",
         },
         method="POST",
     )
@@ -58,77 +60,75 @@ def request_report(
     except urllib.error.URLError as exc:
         raise RuntimeError(f"Google Analytics Data API request failed: {exc.reason}") from exc
 
-    headers = [item.get("name") for item in payload.get("metricHeaders", [])]
-    if headers != list(metrics):
-        raise RuntimeError(f"unexpected metric headers: {headers}")
-    rows = payload.get("rows", [])
-    if not rows:
-        return {name: 0 for name in metrics}
-    if len(rows) != 1:
-        raise RuntimeError(f"expected one aggregate row, got {len(rows)}")
-    values = rows[0].get("metricValues", [])
-    if len(values) != len(metrics):
-        raise RuntimeError("metric value count mismatch")
-    result: dict[str, int] = {}
-    for name, item in zip(metrics, values, strict=True):
-        raw = str(item.get("value", ""))
-        if not re.fullmatch(r"\d+", raw):
-            raise RuntimeError(f"unexpected value for {name}: {raw!r}")
-        result[name] = int(raw)
+    dimension_headers = [item.get("name") for item in payload.get("dimensionHeaders", [])]
+    metric_headers = [item.get("name") for item in payload.get("metricHeaders", [])]
+    if dimension_headers != ["date"]:
+        raise RuntimeError(f"unexpected dimension headers: {dimension_headers}")
+    if metric_headers != list(metrics):
+        raise RuntimeError(f"unexpected metric headers: {metric_headers}")
+
+    result: dict[date, dict[str, int]] = {}
+    for row in payload.get("rows", []):
+        dimensions = row.get("dimensionValues", [])
+        values = row.get("metricValues", [])
+        if len(dimensions) != 1 or len(values) != len(metrics):
+            raise RuntimeError("daily report value count mismatch")
+        raw_date = str(dimensions[0].get("value", ""))
+        if not re.fullmatch(r"\d{8}", raw_date):
+            raise RuntimeError(f"unexpected date value: {raw_date!r}")
+        report_date = datetime.strptime(raw_date, "%Y%m%d").date()
+        if not start_date <= report_date <= end_date:
+            raise RuntimeError(f"daily report date is outside the requested range: {report_date}")
+        if report_date in result:
+            raise RuntimeError(f"duplicate daily report date: {report_date}")
+        counts: dict[str, int] = {}
+        for name, item in zip(metrics, values, strict=True):
+            raw = str(item.get("value", ""))
+            if not re.fullmatch(r"\d+", raw):
+                raise RuntimeError(f"unexpected value for {name}: {raw!r}")
+            counts[name] = int(raw)
+        result[report_date] = counts
     return result
 
 
-def weekly_periods(through_date: date) -> list[tuple[date, date]]:
-    periods = []
-    for weeks_ago in range(3, -1, -1):
-        end_date = through_date - timedelta(days=7 * weeks_ago)
-        periods.append((end_date - timedelta(days=6), end_date))
-    return periods
+def daily_dates(through_date: date) -> list[date]:
+    return [
+        through_date - timedelta(days=offset)
+        for offset in range(DAILY_WINDOW_DAYS - 1, -1, -1)
+    ]
 
 
 def build_summary(*, access_token: str, property_id: str, now: datetime | None = None) -> dict:
     now = now or datetime.now(SEOUL)
     if now.tzinfo is None:
         raise RuntimeError("now must be timezone-aware")
-    through_date = now.astimezone(SEOUL).date() - timedelta(days=2)
-    periods = weekly_periods(through_date)
-    weekly: list[int] = []
-    current_page_views = 0
-    for index, (start_date, end_date) in enumerate(periods):
-        metrics = ("activeUsers", "screenPageViews") if index == 3 else ("activeUsers",)
-        report = request_report(
-            access_token=access_token,
-            property_id=property_id,
-            start_date=start_date,
-            end_date=end_date,
-            metrics=metrics,
-        )
-        weekly.append(report["activeUsers"])
-        if index == 3:
-            current_page_views = report["screenPageViews"]
-
-    current = weekly[-1]
-    previous = weekly[-2]
-    base = {
-        "version": 1,
-        "status": "low_volume" if current < PRIVACY_THRESHOLD else "ok",
+    through_date = now.astimezone(SEOUL).date() - timedelta(days=1)
+    dates = daily_dates(through_date)
+    report = request_daily_report(
+        access_token=access_token,
+        property_id=property_id,
+        start_date=dates[0],
+        end_date=dates[-1],
+    )
+    zero = {"activeUsers": 0, "sessions": 0, "screenPageViews": 0}
+    rows = [(report_date, report.get(report_date, zero)) for report_date in dates]
+    yesterday = rows[-1][1]
+    return {
+        "version": 2,
+        "status": "ok",
         "metric": "activeUsers",
         "throughDate": through_date.isoformat(),
         "updatedAt": now.astimezone(SEOUL).replace(microsecond=0).isoformat(),
-        "current7Days": None,
-        "previous7Days": None,
-        "changeVisitors": None,
-        "weeklyVisitors": [],
+        "yesterday": {
+            "visitors": yesterday["activeUsers"],
+            "sessions": yesterday["sessions"],
+            "pageViews": yesterday["screenPageViews"],
+        },
+        "dailyVisitors": [
+            {"date": report_date.isoformat(), "visitors": counts["activeUsers"]}
+            for report_date, counts in rows
+        ],
     }
-    if current < PRIVACY_THRESHOLD:
-        return base
-
-    base["current7Days"] = {"visitors": current, "pageViews": current_page_views}
-    if previous >= PRIVACY_THRESHOLD:
-        base["previous7Days"] = {"visitors": previous}
-        base["changeVisitors"] = current - previous
-    base["weeklyVisitors"] = [value if value >= PRIVACY_THRESHOLD else None for value in weekly]
-    return base
 
 
 def validate_summary(summary: object) -> dict:
@@ -136,19 +136,19 @@ def validate_summary(summary: object) -> dict:
         raise RuntimeError("visitor stats must be a JSON object")
     expected_keys = {
         "version", "status", "metric", "throughDate", "updatedAt",
-        "current7Days", "previous7Days", "changeVisitors", "weeklyVisitors",
+        "yesterday", "dailyVisitors",
     }
     if set(summary) != expected_keys:
         raise RuntimeError(f"visitor stats keys mismatch: {set(summary) ^ expected_keys}")
-    if summary["version"] != 1 or summary["metric"] != "activeUsers":
+    if summary["version"] != 2 or summary["metric"] != "activeUsers":
         raise RuntimeError("visitor stats version or metric mismatch")
     status = summary["status"]
-    if status not in {"collecting", "low_volume", "ok"}:
+    if status not in {"collecting", "ok"}:
         raise RuntimeError(f"unsupported visitor stats status: {status}")
     if status == "collecting":
         if any(summary[key] is not None for key in (
-            "throughDate", "updatedAt", "current7Days", "previous7Days", "changeVisitors"
-        )) or summary["weeklyVisitors"] != []:
+            "throughDate", "updatedAt", "yesterday"
+        )) or summary["dailyVisitors"] != []:
             raise RuntimeError("collecting visitor stats must not contain measurements")
         return summary
 
@@ -159,41 +159,26 @@ def validate_summary(summary: object) -> dict:
     except ValueError as exc:
         raise RuntimeError("visitor stats updatedAt is invalid") from exc
 
-    if status == "low_volume":
-        if any(summary[key] is not None for key in (
-            "current7Days", "previous7Days", "changeVisitors"
-        )) or summary["weeklyVisitors"] != []:
-            raise RuntimeError("low-volume visitor stats must suppress measurements")
-        return summary
+    yesterday = summary["yesterday"]
+    expected_yesterday_keys = {"visitors", "sessions", "pageViews"}
+    if not isinstance(yesterday, dict) or set(yesterday) != expected_yesterday_keys:
+        raise RuntimeError("yesterday structure mismatch")
+    if any(not isinstance(yesterday[key], int) or yesterday[key] < 0 for key in yesterday):
+        raise RuntimeError("yesterday contains an invalid count")
 
-    current = summary["current7Days"]
-    if not isinstance(current, dict) or set(current) != {"visitors", "pageViews"}:
-        raise RuntimeError("current7Days structure mismatch")
-    if any(not isinstance(current[key], int) or current[key] < 0 for key in current):
-        raise RuntimeError("current7Days contains an invalid count")
-    if current["visitors"] < PRIVACY_THRESHOLD:
-        raise RuntimeError("exact visitor count is below the privacy threshold")
-
-    previous = summary["previous7Days"]
-    change = summary["changeVisitors"]
-    if previous is None:
-        if change is not None:
-            raise RuntimeError("changeVisitors requires previous7Days")
-    else:
-        if not isinstance(previous, dict) or set(previous) != {"visitors"}:
-            raise RuntimeError("previous7Days structure mismatch")
-        if not isinstance(previous["visitors"], int) or previous["visitors"] < PRIVACY_THRESHOLD:
-            raise RuntimeError("previous7Days contains an invalid count")
-        if change != current["visitors"] - previous["visitors"]:
-            raise RuntimeError("changeVisitors arithmetic mismatch")
-
-    weekly = summary["weeklyVisitors"]
-    if not isinstance(weekly, list) or len(weekly) != 4:
-        raise RuntimeError("weeklyVisitors must contain four values")
-    if any(value is not None and (not isinstance(value, int) or value < PRIVACY_THRESHOLD) for value in weekly):
-        raise RuntimeError("weeklyVisitors contains an invalid count")
-    if weekly[-1] != current["visitors"]:
-        raise RuntimeError("latest weeklyVisitors value differs from current7Days")
+    daily = summary["dailyVisitors"]
+    if not isinstance(daily, list) or len(daily) != DAILY_WINDOW_DAYS:
+        raise RuntimeError("dailyVisitors must contain seven values")
+    expected_dates = daily_dates(datetime.strptime(summary["throughDate"], "%Y-%m-%d").date())
+    for item, expected_date in zip(daily, expected_dates, strict=True):
+        if not isinstance(item, dict) or set(item) != {"date", "visitors"}:
+            raise RuntimeError("dailyVisitors structure mismatch")
+        if item["date"] != expected_date.isoformat():
+            raise RuntimeError("dailyVisitors dates are not consecutive")
+        if not isinstance(item["visitors"], int) or item["visitors"] < 0:
+            raise RuntimeError("dailyVisitors contains an invalid count")
+    if daily[-1]["visitors"] != yesterday["visitors"]:
+        raise RuntimeError("latest daily visitor count differs from yesterday")
     return summary
 
 
@@ -233,9 +218,9 @@ def main() -> None:
         print(
             "UPDATED "
             f"through={summary['throughDate']} "
-            f"visitors={summary['current7Days']['visitors']} "
-            f"page_views={summary['current7Days']['pageViews']} "
-            f"change={summary['changeVisitors']}"
+            f"visitors={summary['yesterday']['visitors']} "
+            f"sessions={summary['yesterday']['sessions']} "
+            f"page_views={summary['yesterday']['pageViews']}"
         )
     else:
         print(f"UPDATED through={summary['throughDate']} status={summary['status']}")

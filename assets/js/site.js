@@ -117,26 +117,22 @@
   function formatDate(value) {
     const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || "");
     if (!match) return "";
-    return `${Number(match[2])}월 ${Number(match[3])}일까지`;
+    return `${Number(match[2])}월 ${Number(match[3])}일 기준`;
   }
 
-  function drawWeeklyBars(node, values) {
+  function drawDailyBars(node, values) {
     node.replaceChildren();
-    const visible = values.filter((value) => value !== null);
-    if (visible.length < 2) {
-      node.hidden = true;
-      return;
-    }
-    const maximum = Math.max(...visible, 1);
-    values.forEach((value) => {
+    const maximum = Math.max(...values.map((item) => item.visitors), 1);
+    values.forEach((item) => {
       const bar = document.createElement("span");
-      bar.style.height = value === null ? "3px" : `${Math.max(3, Math.round(value / maximum * 22))}px`;
-      bar.style.opacity = value === null ? ".2" : ".72";
+      bar.style.height = `${Math.max(3, Math.round(item.visitors / maximum * 22))}px`;
+      bar.style.opacity = item.visitors === 0 ? ".24" : ".72";
+      bar.title = `${formatDate(item.date).replace(" 기준", "")} ${item.visitors}명`;
       node.appendChild(bar);
     });
     node.hidden = false;
     node.setAttribute("role", "img");
-    node.setAttribute("aria-label", `최근 4주 분석 허용 방문자 ${values.map((value) => value === null ? "5명 미만" : `${value}명`).join(", ")}`);
+    node.setAttribute("aria-label", `최근 7일 분석 허용 방문자 ${values.map((item) => `${formatDate(item.date).replace(" 기준", "")} ${item.visitors}명`).join(", ")}`);
   }
 
   async function initVisitorStats() {
@@ -154,34 +150,22 @@
       dateNode.textContent = formatDate(stats.throughDate);
 
       if (stats.status === "collecting") return;
-      if (stats.status === "low_volume") {
-        summary.textContent = "최근 7일 분석 허용 방문자 5명 미만";
-        trend.hidden = true;
-        return;
-      }
-      const visitors = requireCount(stats.current7Days && stats.current7Days.visitors);
-      const pageViews = requireCount(stats.current7Days && stats.current7Days.pageViews);
-      if (stats.status !== "ok" || visitors === null || pageViews === null) throw new Error("invalid visitor stats");
+      const visitors = requireCount(stats.yesterday && stats.yesterday.visitors);
+      const sessions = requireCount(stats.yesterday && stats.yesterday.sessions);
+      const pageViews = requireCount(stats.yesterday && stats.yesterday.pageViews);
+      if (stats.status !== "ok" || visitors === null || sessions === null || pageViews === null) throw new Error("invalid visitor stats");
       const number = new Intl.NumberFormat("ko-KR");
-      summary.textContent = `최근 7일 분석 허용 방문자 ${number.format(visitors)}명 · 페이지 조회 ${number.format(pageViews)}회`;
+      summary.textContent = `어제 방문자 ${number.format(visitors)}명 · 방문 ${number.format(sessions)}회 · 페이지 조회 ${number.format(pageViews)}회`;
 
-      const change = Number.isSafeInteger(stats.changeVisitors) ? stats.changeVisitors : null;
-      if (change === null) {
-        changeNode.textContent = "비교할 이전 기간이 없습니다.";
-      } else if (change > 0) {
-        changeNode.textContent = `지난 7일보다 ${number.format(change)}명 늘었습니다.`;
-      } else if (change < 0) {
-        changeNode.textContent = `지난 7일보다 ${number.format(Math.abs(change))}명 줄었습니다.`;
-      } else {
-        changeNode.textContent = "지난 7일과 같습니다.";
-      }
-      const weeklySource = stats.weeklyVisitors;
-      if (!Array.isArray(weeklySource) || weeklySource.length !== 4) throw new Error("invalid weekly visitor stats");
-      const weekly = weeklySource.map((value) => value === null ? null : requireCount(value));
-      if (weekly.some((value, index) => value === null && weeklySource[index] !== null)) {
-        throw new Error("invalid weekly visitor count");
-      }
-      drawWeeklyBars(bars, weekly);
+      const dailySource = stats.dailyVisitors;
+      if (!Array.isArray(dailySource) || dailySource.length !== 7) throw new Error("invalid daily visitor stats");
+      const daily = dailySource.map((item) => ({
+        date: typeof item.date === "string" && formatDate(item.date) ? item.date : null,
+        visitors: requireCount(item.visitors),
+      }));
+      if (daily.some((item) => item.date === null || item.visitors === null)) throw new Error("invalid daily visitor count");
+      changeNode.textContent = "최근 7일";
+      drawDailyBars(bars, daily);
       trend.hidden = false;
     } catch (_) {
       root.hidden = true;

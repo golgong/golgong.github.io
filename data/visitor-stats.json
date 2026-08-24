@@ -1,11 +1,21 @@
 {
-  "version": 1,
-  "status": "collecting",
+  "version": 2,
+  "status": "ok",
   "metric": "activeUsers",
-  "throughDate": null,
-  "updatedAt": null,
-  "current7Days": null,
-  "previous7Days": null,
-  "changeVisitors": null,
-  "weeklyVisitors": []
+  "throughDate": "2026-08-23",
+  "updatedAt": "2026-08-24T23:20:10+09:00",
+  "yesterday": {
+    "visitors": 2,
+    "sessions": 4,
+    "pageViews": 5
+  },
+  "dailyVisitors": [
+    {"date": "2026-08-17", "visitors": 0},
+    {"date": "2026-08-18", "visitors": 0},
+    {"date": "2026-08-19", "visitors": 0},
+    {"date": "2026-08-20", "visitors": 0},
+    {"date": "2026-08-21", "visitors": 0},
+    {"date": "2026-08-22", "visitors": 4},
+    {"date": "2026-08-23", "visitors": 2}
+  ]
 }

@@ -35,8 +35,8 @@ jobs:
           if [[ -n "$GA_PROPERTY_ID" && -n "$WIF_PROVIDER" && -n "$WIF_SERVICE_ACCOUNT" ]]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
           else
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "GA4 또는 Google Cloud 저장소 변수가 없어 이번 갱신을 건너뜁니다." >> "$GITHUB_STEP_SUMMARY"
+            echo "GA4 또는 Google Cloud 저장소 변수가 없어 방문 통계를 갱신할 수 없습니다." >&2
+            exit 1
           fi
 
       - name: Python 준비

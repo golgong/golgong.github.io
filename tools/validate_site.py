@@ -220,7 +220,10 @@ def main() -> None:
         ):
             fail("home journal row content mismatch")
     visitor_strip = home.select_one("[data-visitor-stats]")
-    if visitor_strip is None or visitor_strip.select_one("[data-visitor-summary]") is None:
+    if visitor_strip is None or any(visitor_strip.select_one(selector) is None for selector in (
+        "[data-visitor-summary]", "[data-visitor-trend]", "[data-visitor-bars]",
+        "[data-visitor-date]",
+    )):
         fail("home visitor statistics strip missing")
     if home.select_one("#service-heading").get_text(" ", strip=True) != SERVICE_HEADLINE:
         fail("home service headline mismatch")

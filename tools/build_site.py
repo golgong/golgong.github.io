@@ -8,7 +8,6 @@ import re
 from datetime import datetime
 from email.utils import format_datetime
 from pathlib import Path
-from urllib.parse import urljoin
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -377,8 +376,8 @@ def render_index(posts: list[dict]) -> str:
   </section>
 
   <section class="visitor-strip" aria-label="방문 분석 통계" data-visitor-stats>
-    <p class="visitor-strip__label">Visitor note</p>
-    <p class="visitor-strip__summary" data-visitor-summary aria-live="polite">분석을 허용한 방문을 집계하고 있습니다.</p>
+    <p class="visitor-strip__label">Daily visitors</p>
+    <p class="visitor-strip__summary" data-visitor-summary aria-live="polite">어제 방문 통계를 불러오고 있습니다.</p>
     <div class="visitor-strip__trend" data-visitor-trend hidden>
       <span data-visitor-change></span>
       <span class="visitor-bars" data-visitor-bars hidden></span>
@@ -441,7 +440,7 @@ def render_privacy() -> str:
       <h2>수집하는 정보</h2>
       <p>페이지 주소, 방문 시각, 브라우저와 기기 종류, 대략적인 지역 정보가 Google에 전송될 수 있습니다. 이름, 이메일 주소, 전화번호는 분석 정보로 보내지 않습니다.</p>
       <h2>공개하는 통계</h2>
-      <p>첫 화면에는 Google Analytics에서 측정된 최근 7일의 분석 허용 활성 사용자 수와 직전 7일 대비 변화만 표시합니다. 한 사람이 여러 기기나 브라우저를 사용하면 서로 다른 사용자로 집계될 수 있습니다. 페이지별 방문, 유입어, 위치, 기기, 방문 시각은 공개하지 않습니다. 분석 허용 활성 사용자가 5명 미만이면 정확한 숫자와 추이를 숨깁니다.</p>
+      <p>첫 화면에는 Google Analytics에서 측정된 전날의 분석 허용 활성 사용자 수, 방문 횟수, 페이지 조회 수와 최근 7일의 일별 활성 사용자 추이를 표시합니다. 한 사람이 여러 기기나 브라우저를 사용하면 서로 다른 사용자로 집계될 수 있습니다. 페이지별 방문, 유입어, 위치, 기기, 방문 시각은 공개하지 않습니다.</p>
       <h2>허용과 거부</h2>
       <p>Google 태그 파일은 페이지를 열 때 불러오지만, 허용하기 전에는 방문 분석 이벤트를 보내거나 분석 쿠키를 저장하지 않습니다. 허용하면 Google Analytics가 <code>_ga</code>로 시작하는 쿠키를 최대 2년간 사용할 수 있습니다. 허용 여부는 이 브라우저의 로컬 저장소에 보관하며, 설정을 바꾸거나 브라우저 저장 정보를 지울 때까지 유지됩니다. 언제든 아래 버튼에서 설정을 바꿀 수 있습니다.</p>
       <p class="analytics-choice" data-analytics-choice>현재 설정을 확인하고 있습니다.</p>
@@ -728,7 +727,7 @@ time, table { font-variant-numeric: tabular-nums; }
 .visitor-strip__summary { font-size: 13px; }
 .visitor-strip__trend { display: flex; align-items: center; gap: 13px; color: var(--muted); font-size: 11px; }
 .visitor-strip__date { color: var(--muted); font-size: 11px; }
-.visitor-bars { display: inline-flex; align-items: end; gap: 3px; width: 34px; height: 20px; }
+.visitor-bars { display: inline-flex; align-items: end; gap: 3px; width: 60px; height: 22px; }
 .visitor-bars > span { width: 6px; min-height: 3px; background: var(--accent); opacity: .58; }
 .recent-section { margin-top: 28px; }
 .section-heading {
@@ -1076,26 +1075,22 @@ SITE_JS = r"""
   function formatDate(value) {
     const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || "");
     if (!match) return "";
-    return `${Number(match[2])}월 ${Number(match[3])}일까지`;
+    return `${Number(match[2])}월 ${Number(match[3])}일 기준`;
   }
 
-  function drawWeeklyBars(node, values) {
+  function drawDailyBars(node, values) {
     node.replaceChildren();
-    const visible = values.filter((value) => value !== null);
-    if (visible.length < 2) {
-      node.hidden = true;
-      return;
-    }
-    const maximum = Math.max(...visible, 1);
-    values.forEach((value) => {
+    const maximum = Math.max(...values.map((item) => item.visitors), 1);
+    values.forEach((item) => {
       const bar = document.createElement("span");
-      bar.style.height = value === null ? "3px" : `${Math.max(3, Math.round(value / maximum * 22))}px`;
-      bar.style.opacity = value === null ? ".2" : ".72";
+      bar.style.height = `${Math.max(3, Math.round(item.visitors / maximum * 22))}px`;
+      bar.style.opacity = item.visitors === 0 ? ".24" : ".72";
+      bar.title = `${formatDate(item.date).replace(" 기준", "")} ${item.visitors}명`;
       node.appendChild(bar);
     });
     node.hidden = false;
     node.setAttribute("role", "img");
-    node.setAttribute("aria-label", `최근 4주 분석 허용 방문자 ${values.map((value) => value === null ? "5명 미만" : `${value}명`).join(", ")}`);
+    node.setAttribute("aria-label", `최근 7일 분석 허용 방문자 ${values.map((item) => `${formatDate(item.date).replace(" 기준", "")} ${item.visitors}명`).join(", ")}`);
   }
 
   async function initVisitorStats() {
@@ -1113,34 +1108,22 @@ SITE_JS = r"""
       dateNode.textContent = formatDate(stats.throughDate);
 
       if (stats.status === "collecting") return;
-      if (stats.status === "low_volume") {
-        summary.textContent = "최근 7일 분석 허용 방문자 5명 미만";
-        trend.hidden = true;
-        return;
-      }
-      const visitors = requireCount(stats.current7Days && stats.current7Days.visitors);
-      const pageViews = requireCount(stats.current7Days && stats.current7Days.pageViews);
-      if (stats.status !== "ok" || visitors === null || pageViews === null) throw new Error("invalid visitor stats");
+      const visitors = requireCount(stats.yesterday && stats.yesterday.visitors);
+      const sessions = requireCount(stats.yesterday && stats.yesterday.sessions);
+      const pageViews = requireCount(stats.yesterday && stats.yesterday.pageViews);
+      if (stats.status !== "ok" || visitors === null || sessions === null || pageViews === null) throw new Error("invalid visitor stats");
       const number = new Intl.NumberFormat("ko-KR");
-      summary.textContent = `최근 7일 분석 허용 방문자 ${number.format(visitors)}명 · 페이지 조회 ${number.format(pageViews)}회`;
+      summary.textContent = `어제 방문자 ${number.format(visitors)}명 · 방문 ${number.format(sessions)}회 · 페이지 조회 ${number.format(pageViews)}회`;
 
-      const change = Number.isSafeInteger(stats.changeVisitors) ? stats.changeVisitors : null;
-      if (change === null) {
-        changeNode.textContent = "비교할 이전 기간이 없습니다.";
-      } else if (change > 0) {
-        changeNode.textContent = `지난 7일보다 ${number.format(change)}명 늘었습니다.`;
-      } else if (change < 0) {
-        changeNode.textContent = `지난 7일보다 ${number.format(Math.abs(change))}명 줄었습니다.`;
-      } else {
-        changeNode.textContent = "지난 7일과 같습니다.";
-      }
-      const weeklySource = stats.weeklyVisitors;
-      if (!Array.isArray(weeklySource) || weeklySource.length !== 4) throw new Error("invalid weekly visitor stats");
-      const weekly = weeklySource.map((value) => value === null ? null : requireCount(value));
-      if (weekly.some((value, index) => value === null && weeklySource[index] !== null)) {
-        throw new Error("invalid weekly visitor count");
-      }
-      drawWeeklyBars(bars, weekly);
+      const dailySource = stats.dailyVisitors;
+      if (!Array.isArray(dailySource) || dailySource.length !== 7) throw new Error("invalid daily visitor stats");
+      const daily = dailySource.map((item) => ({
+        date: typeof item.date === "string" && formatDate(item.date) ? item.date : null,
+        visitors: requireCount(item.visitors),
+      }));
+      if (daily.some((item) => item.date === null || item.visitors === null)) throw new Error("invalid daily visitor count");
+      changeNode.textContent = "최근 7일";
+      drawDailyBars(bars, daily);
       trend.hidden = false;
     } catch (_) {
       root.hidden = true;
