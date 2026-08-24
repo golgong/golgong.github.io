@@ -191,11 +191,20 @@ window.gtag("config", "{GA_MEASUREMENT_ID}", {{
 def site_header(active: str = "") -> str:
     home_current = ' aria-current="page"' if active == "home" else ""
     about_current = ' aria-current="page"' if active == "about" else ""
+    visitor_stats = "" if active != "home" else """    <section class="header-stats" aria-label="방문 분석 통계" data-visitor-stats>
+      <p class="header-stats__summary" data-visitor-summary aria-live="polite">어제 방문 통계를 불러오고 있습니다.</p>
+      <div class="header-stats__trend" data-visitor-trend hidden>
+        <span data-visitor-change></span>
+        <span class="visitor-bars" data-visitor-bars hidden></span>
+      </div>
+      <time class="header-stats__date" data-visitor-date></time>
+    </section>
+"""
     return f"""<a class="skip-link" href="#main-content">본문으로 바로가기</a>
 <header class="site-header">
   <div class="site-header__inner">
     <a class="brand" href="/" aria-label="{SITE_NAME} 홈"><span class="brand__mark" aria-hidden="true"></span>{SITE_NAME}</a>
-    <nav aria-label="주요 메뉴">
+{visitor_stats}    <nav aria-label="주요 메뉴">
       <a href="/"{home_current}>전체 글</a>
       <a href="/about/"{about_current}>소개</a>
     </nav>
@@ -375,15 +384,6 @@ def render_index(posts: list[dict]) -> str:
     <a class="text-link" href="mailto:{CONTACT}">{CONTACT} <span aria-hidden="true">→</span></a>
   </section>
 
-  <section class="visitor-strip" aria-label="방문 분석 통계" data-visitor-stats>
-    <p class="visitor-strip__label">Daily visitors</p>
-    <p class="visitor-strip__summary" data-visitor-summary aria-live="polite">어제 방문 통계를 불러오고 있습니다.</p>
-    <div class="visitor-strip__trend" data-visitor-trend hidden>
-      <span data-visitor-change></span>
-      <span class="visitor-bars" data-visitor-bars hidden></span>
-    </div>
-    <time class="visitor-strip__date" data-visitor-date></time>
-  </section>
 </main>
 {site_footer()}
 </body>
@@ -615,6 +615,31 @@ time, table { font-variant-numeric: tabular-nums; }
 }
 .site-header nav a:hover { background: rgba(255, 255, 255, .09); color: #fff; }
 .site-header nav a[aria-current="page"] { background: #fff; color: var(--night); }
+.header-stats {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 0 18px;
+  border-left: 1px solid rgba(255, 255, 255, .16);
+  border-right: 1px solid rgba(255, 255, 255, .16);
+  color: #f3f4f4;
+  font-variant-numeric: tabular-nums;
+}
+.header-stats p { margin: 0; }
+.header-stats__summary {
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.header-stats__trend { display: flex; align-items: center; gap: 9px; color: #bbc0c4; font-size: 10px; white-space: nowrap; }
+.header-stats__date { color: #bbc0c4; font-size: 10px; white-space: nowrap; }
+.header-stats .visitor-bars { width: 47px; height: 18px; }
+.header-stats .visitor-bars > span { width: 5px; background: #d7dadd; }
 .home-shell {
   width: min(var(--wide), calc(100% - 48px));
   margin: auto;
@@ -711,22 +736,6 @@ time, table { font-variant-numeric: tabular-nums; }
 .journal-row__image:hover img { transform: scale(1.012); filter: saturate(1.03); }
 .article-meta { color: var(--muted); font-size: 12px; }
 .text-link { font-size: 13px; font-weight: 400; text-decoration: none; }
-.visitor-strip {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: 10px 20px;
-  min-height: 52px;
-  margin-top: 20px;
-  padding: 12px 2px;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-}
-.visitor-strip p { margin: 0; }
-.visitor-strip__label { color: var(--accent); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; }
-.visitor-strip__summary { font-size: 13px; }
-.visitor-strip__trend { display: flex; align-items: center; gap: 13px; color: var(--muted); font-size: 11px; }
-.visitor-strip__date { color: var(--muted); font-size: 11px; }
 .visitor-bars { display: inline-flex; align-items: end; gap: 3px; width: 60px; height: 22px; }
 .visitor-bars > span { width: 6px; min-height: 3px; background: var(--accent); opacity: .58; }
 .recent-section { margin-top: 28px; }
@@ -893,13 +902,24 @@ time, table { font-variant-numeric: tabular-nums; }
 @media (max-width: 960px) {
   .home-manifesto, .journal-row { gap: 24px; }
   .home-manifesto__copy, .journal-row__body { padding-right: 4px; padding-left: 4px; }
+  .header-stats__trend, .header-stats__date { display: none !important; }
 }
 @media (max-width: 720px) {
   body { word-break: normal; }
   .site-header__inner, .home-shell, .article-shell, .site-footer__inner { width: calc(100% - 36px); }
-  .site-header__inner { min-height: 62px; }
+  .site-header__inner { min-height: 62px; flex-wrap: wrap; gap: 0 12px; }
   .site-header nav a { min-width: 70px; min-height: 44px; padding: 0 10px; font-size: 13px; }
   .brand { flex-basis: auto; white-space: nowrap; font-size: 15px; letter-spacing: .03em; }
+  .site-header nav { margin-left: auto; }
+  .header-stats {
+    order: 3;
+    flex: 0 0 100%;
+    min-height: 34px;
+    padding: 0;
+    border: 0;
+    border-top: 1px solid rgba(255, 255, 255, .13);
+  }
+  .header-stats__summary { font-size: 11px; text-align: center; }
   .home-shell { padding: 22px 0 64px; }
   .home-intro { padding-bottom: 22px; }
   .home-intro h1 { font-size: clamp(34px, 10vw, 42px); }
@@ -914,11 +934,6 @@ time, table { font-variant-numeric: tabular-nums; }
   .journal-row__body { padding: 24px 2px 2px; }
   .journal-row__summary { font-size: 15px; }
   .journal-row__meta { margin-top: 22px; }
-  .visitor-strip { grid-template-columns: 1fr auto; gap: 5px 12px; }
-  .visitor-strip__label { grid-column: 1; }
-  .visitor-strip__summary { grid-column: 1 / -1; grid-row: 2; }
-  .visitor-strip__trend { grid-column: 1 / -1; grid-row: 3; }
-  .visitor-strip__date { grid-column: 2; grid-row: 1; }
   .recent-section { margin-top: 24px; }
   .section-heading { padding: 7px 0 22px; }
   .section-heading h2 { font-size: 36px; }
