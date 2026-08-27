@@ -13,6 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DATA_FILE = ROOT / "data" / "blog.json"
 ANALYTICS_CONFIG_FILE = ROOT / "data" / "analytics.json"
+VISITOR_API_CONFIG_FILE = ROOT / "data" / "visitor-api.json"
 SITE_URL = "https://golgong.github.io"
 SITE_NAME = "골때리는공작소"
 HOME_HERO = "/assets/images/home/hero-v4.jpg"
@@ -191,14 +192,15 @@ window.gtag("config", "{GA_MEASUREMENT_ID}", {{
 def site_header(active: str = "") -> str:
     home_current = ' aria-current="page"' if active == "home" else ""
     about_current = ' aria-current="page"' if active == "about" else ""
-    visitor_stats = "" if active != "home" else """    <section class="header-stats" aria-label="방문 분석 통계" data-visitor-stats>
+    visitor_stats = "" if active != "home" else """    <a class="header-stats" href="/stats/" aria-label="방문 통계 자세히 보기" data-visitor-stats>
       <p class="header-stats__summary" data-visitor-summary aria-live="polite">어제 방문 통계를 불러오고 있습니다.</p>
       <div class="header-stats__trend" data-visitor-trend hidden>
         <span data-visitor-change></span>
         <span class="visitor-bars" data-visitor-bars hidden></span>
       </div>
       <time class="header-stats__date" data-visitor-date></time>
-    </section>
+      <span class="header-stats__more" data-visitor-more>자세히 보기 <span aria-hidden="true">→</span></span>
+    </a>
 """
     return f"""<a class="skip-link" href="#main-content">본문으로 바로가기</a>
 <header class="site-header">
@@ -440,7 +442,7 @@ def render_privacy() -> str:
       <h2>수집하는 정보</h2>
       <p>페이지 주소, 방문 시각, 브라우저와 기기 종류, 대략적인 지역 정보가 Google에 전송될 수 있습니다. 이름, 이메일 주소, 전화번호는 분석 정보로 보내지 않습니다.</p>
       <h2>공개하는 통계</h2>
-      <p>첫 화면에는 Google Analytics에서 측정된 전날의 분석 허용 활성 사용자 수, 방문 횟수, 페이지 조회 수와 최근 7일의 일별 활성 사용자 추이를 표시합니다. 한 사람이 여러 기기나 브라우저를 사용하면 서로 다른 사용자로 집계될 수 있습니다. 페이지별 방문, 유입어, 위치, 기기, 방문 시각은 공개하지 않습니다.</p>
+      <p>첫 화면과 방문 통계 페이지에는 Google Analytics에서 측정된 분석 허용 활성 사용자 수, 방문 횟수, 페이지 조회 수와 기간별 추이를 표시합니다. 공개된 페이지별 수치는 최근 30일의 합산 결과만 표시합니다. 한 사람이 여러 기기나 브라우저를 사용하면 서로 다른 사용자로 집계될 수 있습니다. 개별 방문 기록, 유입어, 위치, 기기, 방문 시각은 공개하지 않습니다.</p>
       <h2>허용과 거부</h2>
       <p>Google 태그 파일은 페이지를 열 때 불러오지만, 허용하기 전에는 방문 분석 이벤트를 보내거나 분석 쿠키를 저장하지 않습니다. 허용하면 Google Analytics가 <code>_ga</code>로 시작하는 쿠키를 최대 2년간 사용할 수 있습니다. 허용 여부는 이 브라우저의 로컬 저장소에 보관하며, 설정을 바꾸거나 브라우저 저장 정보를 지울 때까지 유지됩니다. 언제든 아래 버튼에서 설정을 바꿀 수 있습니다.</p>
       <p class="analytics-choice" data-analytics-choice>현재 설정을 확인하고 있습니다.</p>
@@ -449,6 +451,51 @@ def render_privacy() -> str:
       <p>방문 분석에 관한 문의는 <a href="mailto:{CONTACT}">{CONTACT}</a>으로 보내 주십시오.</p>
     </div>
   </article>
+</main>
+{site_footer()}
+</body>
+</html>
+"""
+
+
+def render_stats() -> str:
+    description = "골때리는공작소의 오늘 방문 현황과 최근 30일 추이를 공개합니다."
+    return f"""{page_head(
+        title=f"방문 통계 | {SITE_NAME}", description=description,
+        canonical=SITE_URL + "/stats/", og_type="website",
+    )}
+<body>
+{site_header("stats")}
+<main id="main-content" class="stats-shell" tabindex="-1" data-visitor-dashboard>
+  <header class="stats-heading">
+    <p class="eyebrow">Visitor statistics</p>
+    <h1>방문 통계</h1>
+    <p>Google Analytics 사용을 허용한 방문만 집계합니다. 수치는 처리 과정에 따라 늦게 반영될 수 있습니다.</p>
+    <p class="stats-status" data-stats-status aria-live="polite">최신 통계를 불러오고 있습니다.</p>
+  </header>
+
+  <section class="stats-grid" aria-label="방문 현황">
+    <article class="stats-card stats-card--current"><p>현재 30분</p><strong data-stat-current>—</strong><span>활성 방문자</span></article>
+    <article class="stats-card"><p>오늘</p><strong data-stat-today-visitors>—</strong><span>방문자</span></article>
+    <article class="stats-card"><p>오늘</p><strong data-stat-today-sessions>—</strong><span>방문</span></article>
+    <article class="stats-card"><p>오늘</p><strong data-stat-today-pageviews>—</strong><span>페이지 조회</span></article>
+    <article class="stats-card"><p>최근 30일</p><strong data-stat-last30-visitors>—</strong><span>방문자</span></article>
+  </section>
+
+  <section class="stats-section" aria-labelledby="daily-heading">
+    <div class="stats-section__heading"><div><p class="eyebrow">Daily visitors</p><h2 id="daily-heading" data-stats-range>최근 30일 추이</h2></div><p data-stats-updated>갱신 시각 확인 중</p></div>
+    <div class="stats-chart" data-stats-daily role="img" aria-label="최근 30일 분석 허용 방문자 추이"></div>
+  </section>
+
+  <section class="stats-section" aria-labelledby="pages-heading">
+    <div class="stats-section__heading"><div><p class="eyebrow">Public pages</p><h2 id="pages-heading">많이 본 공개 페이지</h2></div><p>최근 30일</p></div>
+    <ol class="stats-pages" data-stats-pages><li>집계 결과를 불러오고 있습니다.</li></ol>
+  </section>
+
+  <aside class="stats-note">
+    <p>이 통계는 개인을 식별하지 않는 합산 수치입니다. 같은 사람이 여러 기기나 브라우저를 사용하면 다르게 집계될 수 있으며, 분석을 허용하지 않은 방문은 포함되지 않습니다.</p>
+    <a href="/privacy/">집계 방식과 분석 설정 보기 <span aria-hidden="true">→</span></a>
+  </aside>
 </main>
 {site_footer()}
 </body>
@@ -486,8 +533,10 @@ def render_feed(posts: list[dict]) -> str:
 
 
 def render_sitemap(posts: list[dict], about: dict) -> str:
-    urls = [(SITE_URL + "/", max(p["modified"] for p in posts)[:10]),
-            (SITE_URL + "/about/", about["modified"][:10])]
+    latest_modified = max(p["modified"] for p in posts)[:10]
+    urls = [(SITE_URL + "/", latest_modified),
+            (SITE_URL + "/about/", about["modified"][:10]),
+            (SITE_URL + "/stats/", latest_modified)]
     urls.extend((SITE_URL + post["path"], post["modified"][:10]) for post in posts)
     rows = "".join(
         f"  <url><loc>{esc(url)}</loc><lastmod>{esc(lastmod)}</lastmod></url>\n"
@@ -619,7 +668,7 @@ time, table { font-variant-numeric: tabular-nums; }
   min-width: 0;
   flex: 1 1 auto;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   align-items: center;
   gap: 12px;
   padding: 0 18px;
@@ -627,7 +676,9 @@ time, table { font-variant-numeric: tabular-nums; }
   border-right: 1px solid rgba(255, 255, 255, .16);
   color: #f3f4f4;
   font-variant-numeric: tabular-nums;
+  text-decoration: none;
 }
+.header-stats:hover { background: rgba(255, 255, 255, .07); color: #fff; }
 .header-stats p { margin: 0; }
 .header-stats__summary {
   overflow: hidden;
@@ -638,6 +689,7 @@ time, table { font-variant-numeric: tabular-nums; }
 }
 .header-stats__trend { display: flex; align-items: center; gap: 9px; color: #bbc0c4; font-size: 10px; white-space: nowrap; }
 .header-stats__date { color: #bbc0c4; font-size: 10px; white-space: nowrap; }
+.header-stats__more { color: #f3f4f4; font-size: 10px; white-space: nowrap; }
 .header-stats .visitor-bars { width: 47px; height: 18px; }
 .header-stats .visitor-bars > span { width: 5px; background: #d7dadd; }
 .home-shell {
@@ -884,6 +936,34 @@ time, table { font-variant-numeric: tabular-nums; }
 .about-shell .article-header { margin-bottom: 62px; }
 .about-section-title { color: var(--accent); }
 .privacy-copy h2:first-child { margin-top: 0; }
+.stats-shell { width: min(var(--wide), calc(100% - 48px)); margin: auto; padding: 72px 0 96px; }
+.stats-heading { max-width: 720px; margin-bottom: 48px; }
+.stats-heading h1 { margin: 0 0 18px; font-size: clamp(48px, 7vw, 78px); font-weight: 400; letter-spacing: -.045em; line-height: 1.05; }
+.stats-heading > p:not(.eyebrow) { margin: 0; color: var(--muted); }
+.stats-heading .stats-status { margin-top: 14px; color: var(--accent); font-size: 13px; }
+.stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; margin-bottom: 72px; background: var(--line); border: 1px solid var(--line); }
+.stats-card { min-width: 0; padding: 20px 18px 22px; background: var(--surface); }
+.stats-card--current { background: var(--night); color: #fff; }
+.stats-card p, .stats-card span { display: block; margin: 0; color: var(--muted); font-size: 11px; }
+.stats-card--current p, .stats-card--current span { color: #cfd2d4; }
+.stats-card strong { display: block; overflow: hidden; margin: 15px 0 5px; font-size: clamp(30px, 4vw, 47px); font-weight: inherit; letter-spacing: -.04em; line-height: 1; text-overflow: ellipsis; }
+.stats-section { padding: 42px 0 52px; border-top: 1px solid var(--line); }
+.stats-section__heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 30px; }
+.stats-section__heading .eyebrow { margin-bottom: 8px; }
+.stats-section__heading h2 { margin: 0; font-size: clamp(29px, 4vw, 42px); font-weight: inherit; letter-spacing: -.03em; line-height: 1.2; }
+.stats-section__heading > p { margin: 0; color: var(--muted); font-size: 12px; }
+.stats-chart { display: grid; grid-template-columns: repeat(30, minmax(5px, 1fr)); align-items: end; gap: 6px; min-height: 250px; padding: 20px 12px 0; border-bottom: 1px solid var(--line); background: linear-gradient(to top, rgba(4, 31, 62, .06) 1px, transparent 1px) 0 0 / 100% 25%; }
+.stats-chart__bar { display: block; min-height: 3px; background: var(--accent); opacity: .78; }
+.stats-chart__bar:last-child { background: var(--night); opacity: 1; }
+.stats-pages { margin: 0; padding: 0; list-style: none; counter-reset: page-rank; border-top: 1px solid var(--line); }
+.stats-pages li { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; gap: 16px; align-items: center; min-height: 64px; padding: 11px 0; border-bottom: 1px solid rgba(4, 31, 62, .28); counter-increment: page-rank; }
+.stats-pages li::before { content: counter(page-rank, decimal-leading-zero); color: var(--muted); font-size: 11px; }
+.stats-pages a { overflow: hidden; color: var(--ink); text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+.stats-pages a:hover { color: var(--accent); text-decoration: underline; }
+.stats-pages span { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.stats-note { margin-top: 32px; padding: 26px 28px; background: var(--surface-muted); color: var(--muted); font-size: 13px; }
+.stats-note p { margin: 0 0 12px; }
+.stats-note a { color: var(--ink); }
 .settings-button, .site-footer button { padding: 0; border: 0; background: transparent; color: inherit; font: inherit; font-size: 12px; font-weight: 400; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; cursor: pointer; }
 .settings-button { padding: 9px 13px; border: 1px solid var(--line); color: var(--accent); text-decoration: none; }
 .analytics-choice { color: var(--muted); font-size: 14px; }
@@ -903,6 +983,8 @@ time, table { font-variant-numeric: tabular-nums; }
   .home-manifesto, .journal-row { gap: 24px; }
   .home-manifesto__copy, .journal-row__body { padding-right: 4px; padding-left: 4px; }
   .header-stats__trend, .header-stats__date { display: none !important; }
+  .header-stats { grid-template-columns: minmax(0, 1fr) auto; }
+  .stats-grid { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 720px) {
   body { word-break: normal; }
@@ -920,6 +1002,7 @@ time, table { font-variant-numeric: tabular-nums; }
     border-top: 1px solid rgba(255, 255, 255, .13);
   }
   .header-stats__summary { font-size: 11px; text-align: center; }
+  .header-stats__more { font-size: 9px; }
   .home-shell { padding: 22px 0 64px; }
   .home-intro { padding-bottom: 22px; }
   .home-intro h1 { font-size: clamp(34px, 10vw, 42px); }
@@ -959,6 +1042,15 @@ time, table { font-variant-numeric: tabular-nums; }
   .consent-panel { right: 18px; bottom: 18px; width: calc(100% - 36px); }
   .consent-actions { flex-wrap: wrap; }
   .consent-actions a { width: 100%; margin: 4px 0 0; }
+  .stats-shell { width: calc(100% - 36px); padding: 54px 0 76px; }
+  .stats-heading { margin-bottom: 34px; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); margin-bottom: 54px; }
+  .stats-card:last-child { grid-column: 1 / -1; }
+  .stats-section__heading { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .stats-chart { gap: 3px; min-height: 210px; padding-right: 4px; padding-left: 4px; }
+  .stats-pages li { grid-template-columns: 30px minmax(0, 1fr); gap: 8px; }
+  .stats-pages li span { grid-column: 2; }
+  .stats-note { padding: 22px 20px; }
 }
 @media (max-width: 380px) {
   .site-header__inner { gap: 8px; }
@@ -1087,10 +1179,124 @@ SITE_JS = r"""
     return Number.isSafeInteger(value) && value >= 0 ? value : null;
   }
 
-  function formatDate(value) {
+  function formatDate(value, suffix = true) {
     const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || "");
     if (!match) return "";
-    return `${Number(match[2])}월 ${Number(match[3])}일 기준`;
+    return `${Number(match[2])}월 ${Number(match[3])}일${suffix ? " 기준" : ""}`;
+  }
+
+  function formatUpdatedAt(value) {
+    const parsed = new Date(value || "");
+    if (Number.isNaN(parsed.getTime())) return "";
+    return new Intl.DateTimeFormat("ko-KR", {
+      month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit"
+    }).format(parsed) + " 갱신";
+  }
+
+  async function fetchJson(url, timeoutMs = 8000, cacheMode = "no-store") {
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetch(url, {
+        cache: cacheMode,
+        credentials: "omit",
+        signal: controller.signal
+      });
+      if (!response.ok) throw new Error(`visitor stats HTTP ${response.status}`);
+      return await response.json();
+    } finally {
+      window.clearTimeout(timer);
+    }
+  }
+
+  function normalizeDaily(source) {
+    if (!Array.isArray(source) || source.length < 7 || source.length > 30) {
+      throw new Error("invalid daily visitor stats");
+    }
+    const daily = source.map((item) => ({
+      date: typeof item.date === "string" && formatDate(item.date) ? item.date : null,
+      visitors: requireCount(item.visitors),
+      sessions: item.sessions === undefined ? null : requireCount(item.sessions),
+      pageViews: item.pageViews === undefined ? null : requireCount(item.pageViews)
+    }));
+    if (daily.some((item) => item.date === null || item.visitors === null)) {
+      throw new Error("invalid daily visitor count");
+    }
+    return daily;
+  }
+
+  function normalizeTotals(value) {
+    if (!value) return null;
+    const visitors = requireCount(value.visitors);
+    const sessions = requireCount(value.sessions);
+    const pageViews = requireCount(value.pageViews);
+    if (visitors === null || sessions === null || pageViews === null) {
+      throw new Error("invalid visitor totals");
+    }
+    return { visitors, sessions, pageViews };
+  }
+
+  function normalizeVisitorStats(stats, source) {
+    if (!stats || stats.status !== "ok") throw new Error("visitor stats unavailable");
+    if (stats.version === 3) {
+      const current = requireCount(stats.current30Minutes && stats.current30Minutes.visitors);
+      if (stats.scope !== "analytics-consented" || current === null) {
+        throw new Error("invalid live visitor stats");
+      }
+      const topPages = Array.isArray(stats.topPages) ? stats.topPages.map((item) => {
+        const visitors = requireCount(item.visitors);
+        const pageViews = requireCount(item.pageViews);
+        if (typeof item.path !== "string" || !item.path.startsWith("/") ||
+            typeof item.title !== "string" || visitors === null || pageViews === null) {
+          throw new Error("invalid page statistics");
+        }
+        return { path: item.path, title: item.title, visitors, pageViews };
+      }) : [];
+      return {
+        source,
+        stale: stats.stale === true,
+        dataThrough: stats.dataThrough,
+        generatedAt: stats.generatedAt,
+        current,
+        today: normalizeTotals(stats.today),
+        yesterday: normalizeTotals(stats.yesterday),
+        last7: normalizeTotals(stats.last7Days),
+        last30: normalizeTotals(stats.last30Days),
+        daily: normalizeDaily(stats.dailyVisitors),
+        topPages
+      };
+    }
+    if (stats.version === 2) {
+      return {
+        source: "snapshot",
+        stale: true,
+        dataThrough: stats.throughDate,
+        generatedAt: stats.updatedAt,
+        current: null,
+        today: null,
+        yesterday: normalizeTotals(stats.yesterday),
+        last7: null,
+        last30: null,
+        daily: normalizeDaily(stats.dailyVisitors),
+        topPages: []
+      };
+    }
+    throw new Error("unsupported visitor stats version");
+  }
+
+  async function loadVisitorStats() {
+    let endpoint = "";
+    try {
+      const config = await fetchJson("/data/visitor-api.json", 3000, "default");
+      endpoint = typeof config.endpoint === "string" ? config.endpoint.trim() : "";
+      if (endpoint && new URL(endpoint).protocol !== "https:") endpoint = "";
+    } catch (_) { endpoint = ""; }
+    if (endpoint) {
+      try {
+        return normalizeVisitorStats(await fetchJson(endpoint), "live");
+      } catch (_) { /* use the last static snapshot below */ }
+    }
+    return normalizeVisitorStats(await fetchJson("/data/visitor-stats.json"), "snapshot");
   }
 
   function drawDailyBars(node, values) {
@@ -1100,49 +1306,112 @@ SITE_JS = r"""
       const bar = document.createElement("span");
       bar.style.height = `${Math.max(3, Math.round(item.visitors / maximum * 22))}px`;
       bar.style.opacity = item.visitors === 0 ? ".24" : ".72";
-      bar.title = `${formatDate(item.date).replace(" 기준", "")} ${item.visitors}명`;
+      bar.title = `${formatDate(item.date, false)} ${item.visitors}명`;
       node.appendChild(bar);
     });
     node.hidden = false;
     node.setAttribute("role", "img");
-    node.setAttribute("aria-label", `최근 7일 분석 허용 방문자 ${values.map((item) => `${formatDate(item.date).replace(" 기준", "")} ${item.visitors}명`).join(", ")}`);
+    node.setAttribute("aria-label", `최근 7일 분석 허용 방문자 ${values.map((item) => `${formatDate(item.date, false)} ${item.visitors}명`).join(", ")}`);
   }
 
-  async function initVisitorStats() {
+  function renderHeaderStats(stats) {
     const root = document.querySelector("[data-visitor-stats]");
     if (!root) return;
-    try {
-      const response = await fetch("/data/visitor-stats.json", { cache: "no-store" });
-      if (!response.ok) throw new Error("visitor stats unavailable");
-      const stats = await response.json();
-      const summary = root.querySelector("[data-visitor-summary]");
-      const trend = root.querySelector("[data-visitor-trend]");
-      const changeNode = root.querySelector("[data-visitor-change]");
-      const bars = root.querySelector("[data-visitor-bars]");
-      const dateNode = root.querySelector("[data-visitor-date]");
-      dateNode.textContent = formatDate(stats.throughDate);
+    const summary = root.querySelector("[data-visitor-summary]");
+    const trend = root.querySelector("[data-visitor-trend]");
+    const changeNode = root.querySelector("[data-visitor-change]");
+    const bars = root.querySelector("[data-visitor-bars]");
+    const dateNode = root.querySelector("[data-visitor-date]");
+    const number = new Intl.NumberFormat("ko-KR");
+    const totals = stats.today || stats.yesterday;
+    const period = stats.today ? "오늘" : "어제";
+    summary.textContent = `${period} 방문자 ${number.format(totals.visitors)}명 · 방문 ${number.format(totals.sessions)}회 · 페이지 조회 ${number.format(totals.pageViews)}회`;
+    dateNode.textContent = stats.source === "live" ? formatUpdatedAt(stats.generatedAt) : formatDate(stats.dataThrough);
+    changeNode.textContent = stats.current === null ? "최근 7일" : `현재 30분 ${number.format(stats.current)}명`;
+    drawDailyBars(bars, stats.daily.slice(-7));
+    trend.hidden = false;
+  }
 
-      if (stats.status === "collecting") return;
-      const visitors = requireCount(stats.yesterday && stats.yesterday.visitors);
-      const sessions = requireCount(stats.yesterday && stats.yesterday.sessions);
-      const pageViews = requireCount(stats.yesterday && stats.yesterday.pageViews);
-      if (stats.status !== "ok" || visitors === null || sessions === null || pageViews === null) throw new Error("invalid visitor stats");
-      const number = new Intl.NumberFormat("ko-KR");
-      summary.textContent = `어제 방문자 ${number.format(visitors)}명 · 방문 ${number.format(sessions)}회 · 페이지 조회 ${number.format(pageViews)}회`;
+  function setCount(selector, value) {
+    const node = document.querySelector(selector);
+    if (node) node.textContent = value === null ? "—" : new Intl.NumberFormat("ko-KR").format(value);
+  }
 
-      const dailySource = stats.dailyVisitors;
-      if (!Array.isArray(dailySource) || dailySource.length !== 7) throw new Error("invalid daily visitor stats");
-      const daily = dailySource.map((item) => ({
-        date: typeof item.date === "string" && formatDate(item.date) ? item.date : null,
-        visitors: requireCount(item.visitors),
-      }));
-      if (daily.some((item) => item.date === null || item.visitors === null)) throw new Error("invalid daily visitor count");
-      changeNode.textContent = "최근 7일";
-      drawDailyBars(bars, daily);
-      trend.hidden = false;
-    } catch (_) {
-      root.hidden = true;
+  function renderDashboardChart(node, daily) {
+    node.replaceChildren();
+    node.style.gridTemplateColumns = `repeat(${daily.length}, minmax(5px, 1fr))`;
+    const maximum = Math.max(...daily.map((item) => item.visitors), 1);
+    daily.forEach((item) => {
+      const bar = document.createElement("span");
+      bar.className = "stats-chart__bar";
+      bar.style.height = `${Math.max(3, Math.round(item.visitors / maximum * 220))}px`;
+      bar.style.opacity = item.visitors === 0 ? ".2" : ".78";
+      bar.title = `${formatDate(item.date, false)} 방문자 ${item.visitors}명`;
+      node.appendChild(bar);
+    });
+    node.setAttribute("aria-label", `분석 허용 방문자 일별 추이. ${daily.map((item) => `${formatDate(item.date, false)} ${item.visitors}명`).join(", ")}`);
+  }
+
+  function renderDashboardPages(node, pages) {
+    node.replaceChildren();
+    if (!pages.length) {
+      const empty = document.createElement("li");
+      empty.textContent = "실시간 집계가 연결되면 표시됩니다.";
+      node.appendChild(empty);
+      return;
     }
+    const number = new Intl.NumberFormat("ko-KR");
+    pages.forEach((page) => {
+      const item = document.createElement("li");
+      const link = document.createElement("a");
+      link.href = page.path;
+      link.textContent = page.title;
+      const count = document.createElement("span");
+      count.textContent = `조회 ${number.format(page.pageViews)}회 · 방문자 ${number.format(page.visitors)}명`;
+      item.append(link, count);
+      node.appendChild(item);
+    });
+  }
+
+  function renderStatsDashboard(stats) {
+    const root = document.querySelector("[data-visitor-dashboard]");
+    if (!root) return;
+    setCount("[data-stat-current]", stats.current);
+    setCount("[data-stat-today-visitors]", stats.today ? stats.today.visitors : null);
+    setCount("[data-stat-today-sessions]", stats.today ? stats.today.sessions : null);
+    setCount("[data-stat-today-pageviews]", stats.today ? stats.today.pageViews : null);
+    setCount("[data-stat-last30-visitors]", stats.last30 ? stats.last30.visitors : null);
+    const status = root.querySelector("[data-stats-status]");
+    status.textContent = stats.source === "live"
+      ? (stats.stale ? "최신 집계가 지연되어 마지막 정상 수치를 표시합니다." : "최신 집계를 표시하고 있습니다.")
+      : "실시간 집계에 연결하지 못해 마지막 저장 수치를 표시합니다.";
+    const updated = root.querySelector("[data-stats-updated]");
+    updated.textContent = formatUpdatedAt(stats.generatedAt) || formatDate(stats.dataThrough);
+    const range = root.querySelector("[data-stats-range]");
+    range.textContent = `최근 ${stats.daily.length}일 추이`;
+    renderDashboardChart(root.querySelector("[data-stats-daily]"), stats.daily);
+    renderDashboardPages(root.querySelector("[data-stats-pages]"), stats.topPages);
+  }
+
+  async function refreshVisitorStats() {
+    try {
+      const stats = await loadVisitorStats();
+      renderHeaderStats(stats);
+      renderStatsDashboard(stats);
+    } catch (_) {
+      const header = document.querySelector("[data-visitor-summary]");
+      if (header) header.textContent = "방문 통계를 확인해 보세요.";
+      const status = document.querySelector("[data-stats-status]");
+      if (status) status.textContent = "통계를 불러오지 못했습니다. 잠시 후 다시 확인해 주세요.";
+    }
+  }
+
+  function initVisitorStats() {
+    if (!document.querySelector("[data-visitor-stats], [data-visitor-dashboard]")) return;
+    refreshVisitorStats();
+    window.setInterval(() => {
+      if (document.visibilityState === "visible") refreshVisitorStats();
+    }, 10 * 60 * 1000);
   }
 
   initAnalytics();
@@ -1180,6 +1449,7 @@ def main() -> None:
     write(ROOT / "index.html", render_index(posts))
     write(ROOT / "about" / "index.html", render_about(about))
     write(ROOT / "privacy" / "index.html", render_privacy())
+    write(ROOT / "stats" / "index.html", render_stats())
     for post in posts:
         output = ROOT / post["path"].lstrip("/") / "index.html"
         write(output, render_article(post, posts))
@@ -1195,7 +1465,8 @@ def main() -> None:
     write(ROOT / "404.html", f"""{page_head(title='페이지를 찾을 수 없습니다 | '+SITE_NAME, description='요청한 페이지를 찾을 수 없습니다.', canonical=SITE_URL+'/404.html', og_type='website', robots='noindex,follow')}<body>{site_header()}<main id="main-content" class="article-shell" tabindex="-1"><article><header class="article-header"><p class="eyebrow">404</p><h1>페이지를 찾을 수 없습니다</h1><p class="article-dek">주소를 다시 확인하거나 글 목록에서 원하는 내용을 찾아보십시오.</p></header><p><a class="text-link" href="/">글 목록으로 돌아가기 <span aria-hidden="true">→</span></a></p></article></main>{site_footer()}</body></html>\n""")
 
     tracked = [ROOT / "index.html", ROOT / "about" / "index.html",
-               ROOT / "privacy" / "index.html", ROOT / "feed.xml",
+               ROOT / "privacy" / "index.html", ROOT / "stats" / "index.html",
+               ROOT / "data" / "visitor-api.json", ROOT / "feed.xml",
                ROOT / "sitemap.xml", ROOT / "robots.txt", ROOT / "404.html",
                ROOT / "assets" / "css" / "site.css", ROOT / "assets" / "js" / "site.js"]
     tracked.extend(ROOT / p["path"].lstrip("/") / "index.html" for p in posts)
@@ -1215,7 +1486,7 @@ def main() -> None:
         },
     }
     write(ROOT / "migration-manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
-    print(f"BUILT posts={len(posts)} sitemap_urls={len(posts)+2} feed_items={len(posts)}")
+    print(f"BUILT posts={len(posts)} sitemap_urls={len(posts)+3} feed_items={len(posts)}")
 
 
 if __name__ == "__main__":

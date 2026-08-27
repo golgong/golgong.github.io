@@ -96,7 +96,8 @@ def main() -> None:
 
     html_files = [
         ROOT / "index.html", ROOT / "about" / "index.html",
-        ROOT / "privacy" / "index.html", ROOT / "404.html",
+        ROOT / "privacy" / "index.html", ROOT / "stats" / "index.html",
+        ROOT / "404.html",
     ]
     html_files.extend(ROOT / p["path"].lstrip("/") / "index.html" for p in posts)
     missing = [str(path) for path in html_files if not path.is_file()]
@@ -124,6 +125,14 @@ def main() -> None:
     measurement_id = str(analytics_config["measurement_id"] or "").strip().upper()
     if not GA_MEASUREMENT_ID_PATTERN.fullmatch(measurement_id):
         fail("invalid Google Analytics measurement ID")
+    visitor_api_config = json.loads((ROOT / "data" / "visitor-api.json").read_text(encoding="utf-8"))
+    if set(visitor_api_config) != {"endpoint"}:
+        fail("visitor API config keys mismatch")
+    visitor_endpoint = str(visitor_api_config["endpoint"] or "").strip()
+    if visitor_endpoint:
+        parsed_endpoint = urllib.parse.urlsplit(visitor_endpoint)
+        if parsed_endpoint.scheme != "https" or parsed_endpoint.path != "/v1/visitor-stats":
+            fail("invalid visitor API endpoint")
     validate_summary(json.loads((ROOT / "data" / "visitor-stats.json").read_text(encoding="utf-8")))
 
     public_blob = "\n".join(path.read_text(encoding="utf-8") for path in html_files)
@@ -140,6 +149,7 @@ def main() -> None:
     home = BeautifulSoup((ROOT / "index.html").read_text(encoding="utf-8"), "html.parser")
     about_page = BeautifulSoup((ROOT / "about" / "index.html").read_text(encoding="utf-8"), "html.parser")
     privacy_page = BeautifulSoup((ROOT / "privacy" / "index.html").read_text(encoding="utf-8"), "html.parser")
+    stats_page = BeautifulSoup((ROOT / "stats" / "index.html").read_text(encoding="utf-8"), "html.parser")
     if text_hash(about_page.select_one(".article-body")) != data["about"]["text_sha256"]:
         fail("visible about text changed")
     if len(about_page.select("h2.about-section-title")) != 7:
@@ -169,11 +179,15 @@ def main() -> None:
         fail("about canonical mismatch")
     if privacy_page.find("link", rel="canonical").get("href") != SITE + "/privacy/":
         fail("privacy canonical mismatch")
+    if stats_page.find("link", rel="canonical").get("href") != SITE + "/stats/":
+        fail("stats canonical mismatch")
     privacy_robots = privacy_page.find("meta", attrs={"name": "robots"})
     if not privacy_robots or privacy_robots.get("content") != "noindex,follow":
         fail("privacy page must be noindex,follow")
     if privacy_page.select_one("[data-analytics-settings]") is None:
         fail("privacy analytics settings control missing")
+    if "페이지별 방문, 유입어" in privacy_page.get_text(" ", strip=True):
+        fail("privacy page contradicts the public aggregate page statistics")
     not_found = BeautifulSoup((ROOT / "404.html").read_text(encoding="utf-8"), "html.parser")
     robots = not_found.find("meta", attrs={"name": "robots"})
     if not robots or robots.get("content") != "noindex,follow":
@@ -220,11 +234,25 @@ def main() -> None:
         ):
             fail("home journal row content mismatch")
     visitor_strip = home.select_one("[data-visitor-stats]")
-    if visitor_strip is None or any(visitor_strip.select_one(selector) is None for selector in (
+    if (
+        visitor_strip is None
+        or visitor_strip.name != "a"
+        or visitor_strip.get("href") != "/stats/"
+        or any(visitor_strip.select_one(selector) is None for selector in (
         "[data-visitor-summary]", "[data-visitor-trend]", "[data-visitor-bars]",
-        "[data-visitor-date]",
-    )):
+        "[data-visitor-date]", "[data-visitor-more]",
+        ))
+    ):
         fail("home visitor statistics strip missing")
+    dashboard = stats_page.select_one("[data-visitor-dashboard]")
+    dashboard_selectors = (
+        "[data-stats-status]", "[data-stat-current]", "[data-stat-today-visitors]",
+        "[data-stat-today-sessions]", "[data-stat-today-pageviews]",
+        "[data-stat-last30-visitors]", "[data-stats-daily]", "[data-stats-pages]",
+        "[data-stats-updated]", "[data-stats-range]",
+    )
+    if dashboard is None or any(dashboard.select_one(selector) is None for selector in dashboard_selectors):
+        fail("visitor statistics dashboard structure missing")
     if home.select_one("#service-heading").get_text(" ", strip=True) != SERVICE_HEADLINE:
         fail("home service headline mismatch")
     visible_summaries = home.select(".journal-row__summary")
@@ -265,7 +293,7 @@ def main() -> None:
             fail(f"analytics settings control missing: {path}")
 
     table_total = 0
-    expected_canonicals = {SITE + "/", SITE + "/about/"}
+    expected_canonicals = {SITE + "/", SITE + "/about/", SITE + "/stats/"}
     for post_index, post in enumerate(posts):
         page_path = ROOT / post["path"].lstrip("/") / "index.html"
         soup = BeautifulSoup(page_path.read_text(encoding="utf-8"), "html.parser")
@@ -455,7 +483,8 @@ def main() -> None:
     if manifest["post_count"] != 16 or set(manifest["paths"]) != expected_paths:
         fail("migration manifest mismatch")
     expected_manifest_files = {
-        "index.html", "about/index.html", "privacy/index.html", "404.html",
+        "index.html", "about/index.html", "privacy/index.html", "stats/index.html", "404.html",
+        "data/visitor-api.json",
         "feed.xml", "sitemap.xml", "robots.txt", "assets/css/site.css",
         "assets/js/site.js",
         "assets/data/naver-shopping-api-category-matching-test/method-results.csv",
@@ -470,7 +499,7 @@ def main() -> None:
         if hashlib.sha256(path.read_bytes()).hexdigest() != expected_hash:
             fail(f"generated file changed after build: {relative}")
 
-    print(f"VALIDATED posts=16 tables={table_total} images=99 sitemap=18 feed=16 links=ok seo=ok")
+    print(f"VALIDATED posts=16 tables={table_total} images=99 sitemap=19 feed=16 links=ok seo=ok")
 
 
 if __name__ == "__main__":
