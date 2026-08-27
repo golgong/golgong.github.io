@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 os.environ.setdefault("GA4_PROPERTY_ID", "123456789")
 
-from main import CachedCollector, UpstreamError, _daily_rows, _top_pages, collect_stats, create_app
+from main import AnalyticsClient, CachedCollector, UpstreamError, _daily_rows, _top_pages, collect_stats, create_app
 
 
 def payload() -> dict:
@@ -70,6 +70,34 @@ class CollectorTests(unittest.TestCase):
 
 
 class ParserTests(unittest.TestCase):
+    def test_batch_reports_split_at_google_limit_and_keep_order(self) -> None:
+        class Session:
+            def __init__(self):
+                self.calls = []
+
+            def post(self, url, json, timeout):
+                self.calls.append(json["requests"])
+                offset = sum(len(batch) for batch in self.calls[:-1])
+
+                class Response:
+                    status_code = 200
+
+                    def json(self_inner):
+                        return {"reports": [
+                            {"requestIndex": offset + index}
+                            for index in range(len(json["requests"]))
+                        ]}
+
+                return Response()
+
+        session = Session()
+        client = AnalyticsClient("123456789", session)
+        reports = [{"requestIndex": index} for index in range(7)]
+        result = client.batch_reports(reports)
+
+        self.assertEqual([len(batch) for batch in session.calls], [5, 2])
+        self.assertEqual([item["requestIndex"] for item in result], list(range(7)))
+
     def test_period_totals_are_not_summed_from_daily_users(self) -> None:
         def totals(visitors, sessions=0, views=0):
             return {"rows": [{"metricValues": [
@@ -146,6 +174,11 @@ class HttpTests(unittest.TestCase):
     def setUp(self) -> None:
         self.collector = CachedCollector(payload, 60)
         self.client = create_app(self.collector).test_client()
+
+    def test_health_endpoint(self) -> None:
+        response = self.client.get("/v1/health")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json(), {"status": "ok"})
 
     def test_allowed_origin_and_cache_headers(self) -> None:
         response = self.client.get("/v1/visitor-stats", headers={"Origin": "https://golgong.github.io"})

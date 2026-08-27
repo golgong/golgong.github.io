@@ -18,6 +18,7 @@ PUBLIC_PAGE = re.compile(
     r"^(?:/|/about/?|/privacy/?|/stats/?|/\d{4}/\d{2}/\d{2}/[a-z0-9-]+/?)$"
 )
 METRICS = ("activeUsers", "sessions", "screenPageViews")
+MAX_REPORTS_PER_BATCH = 5
 SEOUL_TIME = timezone(timedelta(hours=9), name="Asia/Seoul")
 
 
@@ -154,10 +155,14 @@ class AnalyticsClient:
         return value
 
     def batch_reports(self, reports: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        response = self._post("batchRunReports", {"requests": reports})
-        values = response.get("reports")
-        if not isinstance(values, list) or len(values) != len(reports):
-            raise UpstreamError("GA4 batch response count mismatch")
+        values: list[dict[str, Any]] = []
+        for offset in range(0, len(reports), MAX_REPORTS_PER_BATCH):
+            batch = reports[offset:offset + MAX_REPORTS_PER_BATCH]
+            response = self._post("batchRunReports", {"requests": batch})
+            batch_values = response.get("reports")
+            if not isinstance(batch_values, list) or len(batch_values) != len(batch):
+                raise UpstreamError("GA4 batch response count mismatch")
+            values.extend(batch_values)
         return values
 
     def realtime_visitors(self) -> int:
@@ -294,6 +299,7 @@ def create_app(collector: CachedCollector | None = None) -> Flask:
         return response
 
     @app.get("/healthz")
+    @app.get("/v1/health")
     def healthz():
         return {"status": "ok"}
 

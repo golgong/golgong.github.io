@@ -9,6 +9,7 @@ REGION="asia-northeast3"
 SERVICE="golgong-visitor-stats"
 RUNTIME_SA_NAME="golgong-visitor-stats"
 RUNTIME_SA="${RUNTIME_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
 gcloud config set project "$PROJECT_ID"
 gcloud services enable \
@@ -33,7 +34,7 @@ gcloud projects add-iam-policy-binding "$PROJECT_ID" \
   --quiet >/dev/null
 
 gcloud run deploy "$SERVICE" \
-  --source . \
+  --source "$SCRIPT_DIR" \
   --region "$REGION" \
   --service-account "$RUNTIME_SA" \
   --allow-unauthenticated \
@@ -46,5 +47,5 @@ gcloud run deploy "$SERVICE" \
   --set-env-vars="GA4_PROPERTY_ID=${GA4_PROPERTY_ID},ALLOWED_ORIGIN=https://golgong.github.io,CACHE_TTL_SECONDS=1800"
 
 SERVICE_URL="$(gcloud run services describe "$SERVICE" --region "$REGION" --format='value(status.url)')"
-echo "Health: ${SERVICE_URL}/healthz"
+echo "Health: ${SERVICE_URL}/v1/health"
 echo "Stats:  ${SERVICE_URL}/v1/visitor-stats"

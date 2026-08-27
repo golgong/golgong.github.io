@@ -35,7 +35,7 @@ python -m venv .venv
 .\.venv\Scripts\python -m unittest -v test_main.py
 ```
 
-실제 GA4 호출은 Cloud Run 배포 후 확인합니다. `/healthz`는 인증 설정과 무관하게 서비스 프로세스만 확인하고, `/v1/visitor-stats`가 정상이어야 실제 연결이 끝난 것입니다.
+실제 GA4 호출은 Cloud Run 배포 후 확인합니다. `/v1/health`는 인증 설정과 무관하게 서비스 프로세스만 확인하고, `/v1/visitor-stats`가 정상이어야 실제 연결이 끝난 것입니다.
 
 ## 배포
 
@@ -48,4 +48,3 @@ bash deploy-cloud-shell.sh
 ```
 
 스크립트가 출력한 서비스 계정 이메일을 GA4 속성의 뷰어로 추가한 뒤, 같은 명령을 다시 실행하면 Cloud Run을 배포합니다. 출력된 URL 뒤에 `/v1/visitor-stats`를 붙여 `data/visitor-api.json`의 `endpoint`에 한 번 저장합니다.
-
