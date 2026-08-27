@@ -30,8 +30,8 @@ Cloud Run 서비스는 전용 서비스 계정으로 실행하며, 그 계정에
 배포에는 `services/visitor-stats-api/deploy-cloud-shell.sh`를 사용합니다. 필요한 값은 Cloud Shell 세션에서만 지정합니다.
 
 ```bash
-export PROJECT_ID="chrome-inkwell-416005"
-export GA4_PROPERTY_ID="551051297"
+export PROJECT_ID="<GCP 프로젝트 ID>"
+export GA4_PROPERTY_ID="<GA4 속성 ID>"
 bash services/visitor-stats-api/deploy-cloud-shell.sh
 ```
 
